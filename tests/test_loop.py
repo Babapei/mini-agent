@@ -24,6 +24,9 @@ def test_todo_task_searches_then_writes(tmp_path: Path) -> None:
     assert "## src/user.ts" in report
     assert "## docs/design.md" in report
     headings = _headings(result.trace_markdown)
+    assert headings.index("Plan") < headings.index("Tool Call")
+    plan_text = result.trace_markdown.split("## Plan", 1)[1].split("##", 1)[0]
+    assert "101" not in plan_text
     expected = [
         "User",
         "Agent Decision",

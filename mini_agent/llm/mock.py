@@ -103,9 +103,22 @@ class MockLLM:
         return _final(_UNKNOWN_ANSWER)
 
 
+_PLANS = {
+    "todo": "搜索 TODO，按文件归类后写入 todo-report.md。",
+    "sales": "读取销售数据，把数量与单价交给计算器求和，再写入 report.md。",
+    "recovery": "先读取 data/missing.txt。若失败，改为搜索 FIXME，再读取销售数据并计算，最后写入汇总。",
+    "blocked": "按任务尝试一次读取或计算。若路径越界或算式非法，就停止，不再用同一调用重试。",
+}
+
+
 def _todo(done: list[Message]) -> Decision:
     if not done:
-        return _call("需要先搜索 workspace 中的 TODO", "search_text", {"query": "TODO"})
+        return _call(
+            "需要先搜索 workspace 中的 TODO",
+            "search_text",
+            {"query": "TODO"},
+            plan=_PLANS["todo"],
+        )
     if len(done) == 1:
         if not done[0].ok:
             return _final(f"无法继续：搜索失败：{done[0].content}")
@@ -127,7 +140,7 @@ def _todo(done: list[Message]) -> Decision:
 
 def _sales(done: list[Message]) -> Decision:
     if not done:
-        return _call("先读取销售数据", "read_file", {"path": "data/sales.txt"})
+        return _call("先读取销售数据", "read_file", {"path": "data/sales.txt"}, plan=_PLANS["sales"])
     if len(done) == 1:
         if not done[0].ok:
             return _final(f"无法继续：读取销售数据失败：{done[0].content}")
@@ -160,7 +173,12 @@ def _sales(done: list[Message]) -> Decision:
 
 def _recovery(done: list[Message]) -> Decision:
     if not done:
-        return _call("先读取任务指定的文件", "read_file", {"path": "data/missing.txt"})
+        return _call(
+            "先读取任务指定的文件",
+            "read_file",
+            {"path": "data/missing.txt"},
+            plan=_PLANS["recovery"],
+        )
     if len(done) == 1:
         if done[0].ok:
             return _final("无法继续：预期 data/missing.txt 不存在，但读取成功。")
@@ -196,8 +214,13 @@ def _recovery(done: list[Message]) -> Decision:
 def _blocked(user: str, done: list[Message]) -> Decision:
     if not done:
         if "非法算式" in user:
-            return _call("尝试验证非法算式", "calculator", {"expression": "2+"})
-        return _call("尝试读取 workspace 之外的文件", "read_file", {"path": "../secret.txt"})
+            return _call("尝试验证非法算式", "calculator", {"expression": "2+"}, plan=_PLANS["blocked"])
+        return _call(
+            "尝试读取 workspace 之外的文件",
+            "read_file",
+            {"path": "../secret.txt"},
+            plan=_PLANS["blocked"],
+        )
     if not done[-1].ok:
         return _final(f"无法继续：{done[-1].content}")
     return _final("无法继续：预期失败的工具调用却成功了，已停止。")
@@ -218,8 +241,8 @@ def _is_number(value: str) -> bool:
     return True
 
 
-def _call(thought: str, name: str, arguments: dict) -> Decision:
-    return Decision(thought=thought, tool_calls=[ToolCall(name=name, arguments=arguments)])
+def _call(thought: str, name: str, arguments: dict, plan: str | None = None) -> Decision:
+    return Decision(thought=thought, tool_calls=[ToolCall(name=name, arguments=arguments)], plan=plan)
 
 
 def _final(answer: str) -> Decision:

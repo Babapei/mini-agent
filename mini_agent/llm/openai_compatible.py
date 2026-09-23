@@ -140,8 +140,9 @@ def _decision_from_payload(data: object) -> Decision:
         if not isinstance(raw_calls, list):
             raise LLMError("tool_calls 格式不正确")
         calls = [_parse_tool_call(item) for item in raw_calls]
-        thought = message.get("content") if isinstance(message.get("content"), str) else "调用工具"
-        return Decision(thought=thought or "调用工具", tool_calls=calls, usage=usage)
+        content = message.get("content") if isinstance(message.get("content"), str) else ""
+        plan = content.strip() or None
+        return Decision(thought=plan or "调用工具", tool_calls=calls, usage=usage, plan=plan)
     content = message.get("content")
     if not isinstance(content, str) or not content.strip():
         raise LLMError("模型响应缺少最终答案")

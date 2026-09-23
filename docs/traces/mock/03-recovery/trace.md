@@ -4,6 +4,10 @@
 
 先读取 data/missing.txt。如果读取失败，搜索 workspace 中的 FIXME，再读取 data/sales.txt，计算所有产品销售额之和，并把失败原因、FIXME 和销售额写入 summary.md。
 
+## Plan
+
+先读取 data/missing.txt。若失败，改为搜索 FIXME，再读取销售数据并计算，最后写入汇总。
+
 ## Agent Decision
 
 step: 1

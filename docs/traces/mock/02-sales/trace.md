@@ -4,6 +4,10 @@
 
 读取 sales.txt 中的数据，计算所有产品销售额之和，并把计算结果写入 report.md。
 
+## Plan
+
+读取销售数据，把数量与单价交给计算器求和，再写入 report.md。
+
 ## Agent Decision
 
 step: 1

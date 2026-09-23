@@ -10,6 +10,8 @@ def _tool(name: str, content: str, ok: bool = True) -> Message:
 def test_todo_decisions_follow_search_result() -> None:
     llm = MockLLM()
     first = llm.decide([Message(role="user", content=TODO_TASK)], [])
+    assert first.plan
+    assert "101" not in first.plan
     assert [call.name for call in first.tool_calls] == ["search_text"]
     assert first.tool_calls[0].arguments == {"query": "TODO"}
 
@@ -20,6 +22,7 @@ def test_todo_decisions_follow_search_result() -> None:
         ],
         [],
     )
+    assert second.plan is None
     assert second.tool_calls[0].name == "write_file"
     assert second.tool_calls[0].arguments["path"] == "todo-report.md"
     assert "## src/user.ts" in second.tool_calls[0].arguments["content"]
@@ -42,6 +45,8 @@ def test_sales_total_comes_from_calculator_result() -> None:
     llm = MockLLM()
     csv_text = "product,quantity,price\nA,2,10\nB,4,5\n"
     first = llm.decide([Message(role="user", content=SALES_TASK)], [])
+    assert first.plan
+    assert "101" not in first.plan
     assert first.tool_calls[0].arguments == {"path": "data/sales.txt"}
 
     second = llm.decide(

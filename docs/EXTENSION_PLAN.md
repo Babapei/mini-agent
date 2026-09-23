@@ -51,7 +51,7 @@
 
 ## E2：Plan
 
-- 状态：未开始
+- 状态：已完成
 - 目标：动手调用工具之前，先有一份短计划，并写进 Trace。
 - 允许目录：`mini_agent/llm/`、`mini_agent/agent/loop.py`、`mini_agent/trace/`、`docs/prompts/system.md`、`tests/test_mock.py`、`tests/test_loop.py`、本文
 
@@ -72,8 +72,8 @@
 
 完成记录：
 
-- 结果：
-- 遗留问题：
+- 结果：`Decision` 增加可选 `plan`。Mock 四类任务只在第一次工具调用时带上计划，计划里没有写死合计。主循环在第一次工具调用前把计划写成 Trace 的 `Plan`。没有计划时工具调用不变。真实模型若在工具调用的消息里写了计划文本，同样记入 `Plan`；系统提示要求第一轮先写计划再调用工具。`pytest` 30 项通过，`python3 scripts/run_tasks.py --llm mock` 通过。
+- 遗留问题：无。
 
 ## E3：对执行计划动态调整
 

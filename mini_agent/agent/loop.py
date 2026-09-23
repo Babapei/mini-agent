@@ -48,6 +48,7 @@ def run_agent(
     ]
     last_signature: tuple[str, str] | None = None
     streak = 0
+    planned = False
 
     for step in range(1, max_steps + 1):
         try:
@@ -57,6 +58,9 @@ def run_agent(
         except Exception as exc:
             return _finish(recorder, trace_dir, "cannot_continue", f"无法继续：模型决策失败：{exc}", step - 1)
 
+        if decision.tool_calls and not planned and decision.plan:
+            recorder.plan(decision.plan)
+            planned = True
         recorder.decision(step, decision)
         if decision.tool_calls:
             messages.append(Message(role="assistant", content=decision.thought, tool_calls=list(decision.tool_calls)))

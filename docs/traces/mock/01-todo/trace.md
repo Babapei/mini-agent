@@ -4,6 +4,10 @@
 
 找出 workspace 目录中所有 TODO，按照文件进行分类并生成 todo-report.md。
 
+## Plan
+
+搜索 TODO，按文件归类后写入 todo-report.md。
+
 ## Agent Decision
 
 step: 1

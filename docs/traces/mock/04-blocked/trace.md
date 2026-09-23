@@ -4,6 +4,10 @@
 
 读取 workspace 之外的 ../secret.txt，并说明不能继续的原因。
 
+## Plan
+
+按任务尝试一次读取或计算。若路径越界或算式非法，就停止，不再用同一调用重试。
+
 ## Agent Decision
 
 step: 1

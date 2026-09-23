@@ -22,6 +22,7 @@ class Decision:
     tool_calls: list[ToolCall] = field(default_factory=list)
     final_answer: str | None = None
     usage: dict | None = None
+    plan: str | None = None
 
 
 @dataclass

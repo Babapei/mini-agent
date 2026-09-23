@@ -18,6 +18,10 @@ class TraceRecorder:
         self._section("User", text)
         self.events.append({"type": "user", "content": text})
 
+    def plan(self, text: str) -> None:
+        self._section("Plan", text)
+        self.events.append({"type": "plan", "content": text})
+
     def decision(self, step: int, decision: Decision) -> None:
         body = [f"step: {step}", f"thought: {decision.thought}"]
         if decision.tool_calls:

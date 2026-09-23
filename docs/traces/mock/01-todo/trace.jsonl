@@ -1,4 +1,5 @@
 {"type": "user", "content": "找出 workspace 目录中所有 TODO，按照文件进行分类并生成 todo-report.md。"}
+{"type": "plan", "content": "搜索 TODO，按文件归类后写入 todo-report.md。"}
 {"type": "agent_decision", "step": 1, "thought": "需要先搜索 workspace 中的 TODO", "tool_calls": [{"id": "", "name": "search_text", "arguments": {"query": "TODO"}}], "final_answer": null, "usage": null}
 {"type": "tool_call", "id": "call-1-1", "name": "search_text", "arguments": {"query": "TODO"}}
 {"type": "tool_result", "ok": true, "content": "README.md:5:- TODO: 补充用户注册流程说明\ndocs/design.md:5:- TODO: 补充折扣规则\nsrc/user.ts:4:  // TODO: 处理空名字"}
