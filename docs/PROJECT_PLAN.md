@@ -250,7 +250,7 @@ python3 scripts/run_tasks.py --llm openai
 7. E7 Tool Search
 8. E8 Sub Agent
 
-E1 到 E4 已完成，其余未开始。E3 依赖 E2，E6 依赖 E3，E8 依赖 E1 和 E2，并且默认关闭。
+E1 到 E5 已完成，其余未开始。E3 依赖 E2，E6 依赖 E3，E8 依赖 E1 和 E2，并且默认关闭。
 
 ## 第四题交付清单
 

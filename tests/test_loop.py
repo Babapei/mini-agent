@@ -183,6 +183,64 @@ def test_short_sales_task_is_not_compressed(tmp_path: Path) -> None:
     assert "Context Compression" not in result.trace_markdown
 
 
+def test_callback_sees_search_before_final_answer(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    generate(workspace)
+    events = []
+    result = run_agent(TODO_TASK, workspace, MockLLM(), on_event=events.append)
+    kinds = [(event.kind, event.name) for event in events]
+    assert kinds[0] == ("tool_call", "search_text")
+    assert kinds[-1][0] == "final"
+    assert result.answer
+    assert events[-1].text == result.answer
+
+
+def test_no_stream_prints_only_the_final_answer(tmp_path: Path, capsys) -> None:
+    from mini_agent.cli import main
+
+    workspace = tmp_path / "workspace"
+    generate(workspace)
+    code = main(
+        [
+            "run",
+            TODO_TASK,
+            "--workspace",
+            str(workspace),
+            "--llm",
+            "mock",
+            "--no-stream",
+            "--trace-dir",
+            str(tmp_path / "trace"),
+        ]
+    )
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "tool:" not in captured.out
+    assert "todo-report.md" in captured.out
+
+
+def test_stream_prints_tool_name_before_answer(tmp_path: Path, capsys) -> None:
+    from mini_agent.cli import main
+
+    workspace = tmp_path / "workspace"
+    generate(workspace)
+    code = main(
+        [
+            "run",
+            TODO_TASK,
+            "--workspace",
+            str(workspace),
+            "--llm",
+            "mock",
+            "--trace-dir",
+            str(tmp_path / "trace"),
+        ]
+    )
+    captured = capsys.readouterr()
+    assert code == 0
+    assert captured.out.index("tool: search_text") < captured.out.index("todo-report.md")
+
+
 def test_read_only_run_records_write_denial(tmp_path: Path) -> None:
     workspace = tmp_path / "workspace"
     workspace.mkdir()

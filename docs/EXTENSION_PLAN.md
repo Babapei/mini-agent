@@ -130,7 +130,7 @@
 
 ## E5：Streaming
 
-- 状态：未开始
+- 状态：已完成
 - 目标：命令行在工具调用和最终答案产生时就打印，而不是等整句任务结束。
 - 允许目录：`mini_agent/agent/loop.py`、`mini_agent/cli.py`、`mini_agent/llm/openai_compatible.py`、`tests/test_loop.py`、`tests/test_openai_adapter.py`、本文
 
@@ -151,8 +151,8 @@
 
 完成记录：
 
-- 结果：
-- 遗留问题：
+- 结果：主循环增加可选 `on_event`。不传回调时，结束方式和打印方式与原来相同。命令行默认打印 `tool: 工具名`，并在最终答案产生时打印；`--no-stream` 仍等任务结束后打印一次最终答案。Mock 的最终答案只通过回调交一次。真实模型的 HTTP 仍是非流式。`StreamAssembler` 用录好的分片测试，参数 JSON 未收齐时不产出工具调用。`pytest` 38 项通过，`python3 scripts/run_tasks.py --llm mock` 通过。
+- 遗留问题：线上请求还没有改成流式 HTTP。分片解析只在测试里使用。
 
 ## E6：Tool 调用失败自动恢复
 

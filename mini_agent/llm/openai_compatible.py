@@ -169,3 +169,72 @@ def _parse_tool_call(item: object) -> ToolCall:
         raise LLMError("工具参数必须是对象")
     call_id = item.get("id")
     return ToolCall(name=function["name"], arguments=arguments, id=str(call_id or ""))
+
+
+class StreamAssembler:
+    """把录好的流式分片收成决策。参数还不是完整 JSON 时，不产出工具调用。
+
+    线上请求仍走非流式 HTTP，这个类只给分片测试使用。
+    """
+
+    def __init__(self) -> None:
+        self._content: list[str] = []
+        self._calls: dict[int, dict[str, str]] = {}
+
+    def feed(self, line: str) -> None:
+        raw = line.strip()
+        if not raw.startswith("data:"):
+            return
+        data = raw[len("data:") :].strip()
+        if not data or data == "[DONE]":
+            return
+        payload = json.loads(data)
+        choices = payload.get("choices") if isinstance(payload, dict) else None
+        if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
+            return
+        delta = choices[0].get("delta")
+        if not isinstance(delta, dict):
+            return
+        content = delta.get("content")
+        if isinstance(content, str):
+            self._content.append(content)
+        raw_calls = delta.get("tool_calls")
+        if not isinstance(raw_calls, list):
+            return
+        for item in raw_calls:
+            if not isinstance(item, dict) or not isinstance(item.get("index"), int):
+                continue
+            slot = self._calls.setdefault(item["index"], {"id": "", "name": "", "arguments": ""})
+            if isinstance(item.get("id"), str):
+                slot["id"] = item["id"]
+            function = item.get("function")
+            if not isinstance(function, dict):
+                continue
+            if isinstance(function.get("name"), str):
+                slot["name"] += function["name"]
+            if isinstance(function.get("arguments"), str):
+                slot["arguments"] += function["arguments"]
+
+    def complete_tool_calls(self) -> list[ToolCall]:
+        calls: list[ToolCall] = []
+        for index in sorted(self._calls):
+            slot = self._calls[index]
+            if not slot["name"]:
+                continue
+            try:
+                arguments = json.loads(slot["arguments"] or "{}")
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(arguments, dict):
+                continue
+            calls.append(ToolCall(name=slot["name"], arguments=arguments, id=slot["id"]))
+        return calls
+
+    def decision(self) -> Decision:
+        calls = self.complete_tool_calls()
+        content = "".join(self._content).strip()
+        if calls:
+            return Decision(thought=content or "调用工具", tool_calls=calls, plan=content or None)
+        if not content:
+            raise LLMError("模型响应缺少最终答案")
+        return Decision(thought=content, final_answer=content)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -20,6 +21,13 @@ DEFAULT_SYSTEM_PROMPT = (
     "算术必须交给 calculator。路径必须留在 workspace 内。"
     "任务完成或无法继续时，直接给出最终答案，不要再调用工具。"
 )
+
+
+@dataclass(frozen=True)
+class AgentEvent:
+    kind: str
+    name: str = ""
+    text: str = ""
 
 
 @dataclass
@@ -41,6 +49,7 @@ def run_agent(
     output_limit: int = DEFAULT_OUTPUT_LIMIT,
     context_limit: int = DEFAULT_CONTEXT_LIMIT,
     allowed: set[str] | None = None,
+    on_event: Callable[[AgentEvent], None] | None = None,
 ) -> AgentResult:
     registry = ToolRegistry(workspace, allowed)
     recorder = TraceRecorder()
@@ -61,9 +70,9 @@ def run_agent(
         try:
             decision = llm.decide(messages, registry.schemas())
         except LLMError as exc:
-            return _finish(recorder, trace_dir, "cannot_continue", f"无法继续：模型响应不可用：{exc}", step - 1)
+            return _finish(recorder, trace_dir, "cannot_continue", f"无法继续：模型响应不可用：{exc}", step - 1, on_event)
         except Exception as exc:
-            return _finish(recorder, trace_dir, "cannot_continue", f"无法继续：模型决策失败：{exc}", step - 1)
+            return _finish(recorder, trace_dir, "cannot_continue", f"无法继续：模型决策失败：{exc}", step - 1, on_event)
 
         if decision.tool_calls and not planned and decision.plan:
             recorder.plan(decision.plan)
@@ -78,9 +87,11 @@ def run_agent(
                 if not call.id:
                     call.id = f"call-{step}-{index}"
                 recorder.tool_call(call)
+                _emit(on_event, AgentEvent(kind="tool_call", name=call.name))
                 result = registry.execute(call.name, call.arguments)
                 shown = _limit_result(result, output_limit)
                 recorder.tool_result(shown)
+                _emit(on_event, AgentEvent(kind="tool_result", name=call.name, text=shown.text))
                 messages.append(
                     Message(
                         role="tool",
@@ -110,14 +121,14 @@ def run_agent(
                         f"工具 {call.name}，参数 {signature[1]}。"
                         f"错误：{shown.text}"
                     )
-                    return _finish(recorder, trace_dir, "cannot_continue", answer, step)
+                    return _finish(recorder, trace_dir, "cannot_continue", answer, step, on_event)
             last_tool_failed = round_failed
             continue
         if decision.final_answer:
-            return _finish(recorder, trace_dir, "final", decision.final_answer, step)
-        return _finish(recorder, trace_dir, "cannot_continue", "无法继续：模型没有给出工具调用或最终答案。", step)
+            return _finish(recorder, trace_dir, "final", decision.final_answer, step, on_event)
+        return _finish(recorder, trace_dir, "cannot_continue", "无法继续：模型没有给出工具调用或最终答案。", step, on_event)
 
-    return _finish(recorder, trace_dir, "step_limit", f"无法继续：已达到最大轮数 {max_steps}。", max_steps)
+    return _finish(recorder, trace_dir, "step_limit", f"无法继续：已达到最大轮数 {max_steps}。", max_steps, on_event)
 
 
 def compress_context(messages: list[Message], limit: int) -> int:
@@ -156,14 +167,21 @@ def _limit_result(result: ToolResult, limit: int) -> ToolResult:
     return ToolResult(ok=False, error=clipped)
 
 
+def _emit(on_event: Callable[[AgentEvent], None] | None, event: AgentEvent) -> None:
+    if on_event is not None:
+        on_event(event)
+
+
 def _finish(
     recorder: TraceRecorder,
     trace_dir: Path | None,
     status: str,
     answer: str,
     steps: int,
+    on_event: Callable[[AgentEvent], None] | None = None,
 ) -> AgentResult:
     recorder.final(status, answer)
+    _emit(on_event, AgentEvent(kind="final", text=answer))
     if trace_dir is not None:
         recorder.write(trace_dir)
     return AgentResult(status=status, answer=answer, steps=steps, trace_markdown=recorder.markdown())

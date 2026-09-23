@@ -8,7 +8,7 @@ from urllib.error import HTTPError, URLError
 import pytest
 
 from mini_agent.llm.base import LLMError, Message, ToolCall
-from mini_agent.llm.openai_compatible import OpenAICompatibleLLM
+from mini_agent.llm.openai_compatible import OpenAICompatibleLLM, StreamAssembler
 
 
 class Response:
@@ -182,3 +182,20 @@ def test_assistant_tool_history_is_sent() -> None:
     assert captured["messages"][0]["tool_calls"][0]["id"] == "call-1"
     assert captured["messages"][1]["role"] == "tool"
     assert captured["messages"][1]["content"] == "文件不存在"
+
+
+def test_stream_chunks_wait_for_complete_arguments() -> None:
+    partial = (
+        'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1",'
+        '"function":{"name":"read_file","arguments":"{\\"path\\":"}}]}}]}'
+    )
+    rest = 'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\\"data/sales.txt\\"}"}}]}}]}'
+    assembler = StreamAssembler()
+    assembler.feed(partial)
+    assert assembler.complete_tool_calls() == []
+    assembler.feed(rest)
+    assembler.feed("data: [DONE]")
+    decision = assembler.decision()
+    assert decision.tool_calls[0].name == "read_file"
+    assert decision.tool_calls[0].arguments == {"path": "data/sales.txt"}
+    assert decision.tool_calls[0].id == "call_1"

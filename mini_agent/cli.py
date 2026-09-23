@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from mini_agent.agent.loop import run_agent
+from mini_agent.agent.loop import AgentEvent, run_agent
 from mini_agent.llm.base import LLMError
 from mini_agent.llm.mock import MockLLM
 from mini_agent.llm.openai_compatible import OpenAICompatibleLLM
@@ -27,6 +27,7 @@ def main(argv: list[str] | None = None) -> int:
         default="read,write,compute",
         help="允许的权限，逗号分隔：read,write,compute。默认全部允许",
     )
+    run.add_argument("--no-stream", action="store_true", help="结束后再打印最终答案")
     args = parser.parse_args(argv)
     return _run(args)
 
@@ -53,12 +54,21 @@ def _run(args: argparse.Namespace) -> int:
         trace_dir=Path(args.trace_dir),
         system_prompt=_load_system_prompt(),
         allowed=allowed,
+        on_event=None if args.no_stream else _print_event,
     )
-    print(result.answer, flush=True)
+    if args.no_stream:
+        print(result.answer, flush=True)
     print(f"status: {result.status}", file=sys.stderr)
     print(f"steps: {result.steps}", file=sys.stderr)
     print(f"trace: {args.trace_dir}", file=sys.stderr)
     return 0
+
+
+def _print_event(event: AgentEvent) -> None:
+    if event.kind == "tool_call":
+        print(f"tool: {event.name}", flush=True)
+    elif event.kind == "final":
+        print(event.text, flush=True)
 
 
 def _build_llm(name: str):
