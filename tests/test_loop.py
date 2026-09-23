@@ -286,6 +286,97 @@ def test_path_escape_does_not_add_recovery_hint(tmp_path: Path) -> None:
     assert "Recovery Hint" not in result.trace_markdown
 
 
+def test_delegate_is_absent_for_the_default_todo_task(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    generate(workspace)
+
+    class Watching(MockLLM):
+        def decide(self, messages: list[Message], tools: list[dict]) -> Decision:
+            assert "delegate" not in {tool["name"] for tool in tools}
+            return super().decide(messages, tools)
+
+    result = run_agent(TODO_TASK, workspace, Watching())
+    assert result.status == "final"
+
+
+def test_delegate_runs_one_child_level(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    child_tool_names: list[set[str]] = []
+
+    class Split:
+        def decide(self, messages: list[Message], tools: list[dict]) -> Decision:
+            names = {tool["name"] for tool in tools}
+            tool_messages = [message for message in messages if message.role == "tool"]
+            if "delegate" not in names:
+                child_tool_names.append(names)
+                if tool_messages:
+                    return Decision(thought="结束", final_answer=tool_messages[-1].content.strip())
+                return Decision(
+                    thought="计算",
+                    tool_calls=[ToolCall(name="calculator", arguments={"expression": "1+1"})],
+                )
+            if not tool_messages:
+                return Decision(
+                    thought="委托",
+                    tool_calls=[ToolCall(name="delegate", arguments={"task": "计算 1+1"})],
+                )
+            if tool_messages[-1].name == "delegate":
+                return Decision(
+                    thought="写入",
+                    tool_calls=[
+                        ToolCall(
+                            name="write_file",
+                            arguments={"path": "out.md", "content": tool_messages[-1].content},
+                        )
+                    ],
+                )
+            return Decision(thought="完成", final_answer="已写入")
+
+    result = run_agent(
+        "交给子任务",
+        workspace,
+        Split(),
+        trace_dir=tmp_path / "trace",
+        enable_delegate=True,
+    )
+    written = (workspace / "out.md").read_text(encoding="utf-8")
+    assert result.status == "final"
+    assert written.startswith("2\n")
+    assert "子循环轮数：" in written
+    assert child_tool_names
+    assert all("delegate" not in names for names in child_tool_names)
+    assert (tmp_path / "trace" / "sub" / "trace.md").is_file()
+    assert "delegate" in result.trace_markdown
+
+
+def test_failed_child_returns_to_parent_once(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+
+    class AlwaysCalculate:
+        def decide(self, messages: list[Message], tools: list[dict]) -> Decision:
+            names = {tool["name"] for tool in tools}
+            tool_messages = [message for message in messages if message.role == "tool"]
+            if "delegate" in names:
+                if tool_messages:
+                    assert tool_messages[-1].ok is False
+                    return Decision(thought="停止", final_answer="子任务失败")
+                return Decision(
+                    thought="委托",
+                    tool_calls=[ToolCall(name="delegate", arguments={"task": "一直计算"})],
+                )
+            return Decision(
+                thought="继续",
+                tool_calls=[ToolCall(name="calculator", arguments={"expression": "1+1"})],
+            )
+
+    result = run_agent("父任务", workspace, AlwaysCalculate(), enable_delegate=True, sub_max_steps=1)
+    assert result.status == "final"
+    assert result.answer == "子任务失败"
+    assert _headings(result.trace_markdown).count("Tool Call") == 1
+
+
 def test_read_only_run_records_write_denial(tmp_path: Path) -> None:
     workspace = tmp_path / "workspace"
     workspace.mkdir()

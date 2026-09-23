@@ -28,6 +28,7 @@ def main(argv: list[str] | None = None) -> int:
         help="允许的权限，逗号分隔：read,write,compute。默认全部允许",
     )
     run.add_argument("--no-stream", action="store_true", help="结束后再打印最终答案")
+    run.add_argument("--sub-agent", action="store_true", help="允许把子任务交给下一层，默认关闭")
     args = parser.parse_args(argv)
     return _run(args)
 
@@ -55,6 +56,7 @@ def _run(args: argparse.Namespace) -> int:
         system_prompt=_load_system_prompt(),
         allowed=allowed,
         on_event=None if args.no_stream else _print_event,
+        enable_delegate=args.sub_agent,
     )
     if args.no_stream:
         print(result.answer, flush=True)

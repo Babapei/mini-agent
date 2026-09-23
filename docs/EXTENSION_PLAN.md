@@ -208,7 +208,7 @@
 
 ## E8：Sub Agent
 
-- 状态：未开始
+- 状态：已完成
 - 目标：主 Agent 可以把一句子任务交给同一个循环的下一层，并拿回子任务的最终答案。
 - 允许目录：`mini_agent/tools/`、`mini_agent/agent/loop.py`、`mini_agent/cli.py`、`tests/test_loop.py`、本文
 - 依赖：E1、E2 已完成。默认关闭。
@@ -230,8 +230,8 @@
 
 完成记录：
 
-- 结果：
-- 遗留问题：
+- 结果：`delegate` 默认不注册。`--sub-agent` 才注册，权限是 `read`，参数只有子任务文本。子循环使用同一个 workspace 和同一套工具，但不能再委托。子循环默认最多 6 轮，轮数写进返回给父循环的文本，不占用父循环的 12 轮。子 Trace 写到本次 Trace 目录的 `sub/`。子循环失败时父循环收到失败结果。假模型测试里，父任务委托「计算 1+1」，子循环调用计算器，父循环把答案写入文件。未打开时 Mock 四个任务的工具列表里没有 `delegate`。`pytest` 44 项通过，`python3 scripts/run_tasks.py --llm mock` 通过。`docs/DESIGN.md` 的限制说明和 README 的结构、开关已按落地结果更新。
+- 遗留问题：无。
 
 ## 做完之后
 

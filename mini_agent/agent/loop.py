@@ -8,13 +8,14 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from mini_agent.llm.base import LLMError, Message
-from mini_agent.tools.base import ToolResult
+from mini_agent.tools.base import ToolError, ToolResult
 from mini_agent.tools.registry import ToolRegistry
 from mini_agent.trace.recorder import TraceRecorder
 
 DEFAULT_MAX_STEPS = 12
 DEFAULT_OUTPUT_LIMIT = 8000
 DEFAULT_CONTEXT_LIMIT = 24000
+DEFAULT_SUB_STEPS = 6
 COMPRESSED_PREFIX = "已压缩："
 DEFAULT_SYSTEM_PROMPT = (
     "你是 Mini Agent。只通过工具读取文件、搜索文本、计算和写入文件。"
@@ -50,8 +51,37 @@ def run_agent(
     context_limit: int = DEFAULT_CONTEXT_LIMIT,
     allowed: set[str] | None = None,
     on_event: Callable[[AgentEvent], None] | None = None,
+    enable_delegate: bool = False,
+    sub_max_steps: int = DEFAULT_SUB_STEPS,
 ) -> AgentResult:
-    registry = ToolRegistry(workspace, allowed)
+    def _delegate(sub_workspace: Path, arguments: dict) -> str:
+        subtask = arguments["task"].strip()
+        if not subtask:
+            raise ToolError("子任务不能为空")
+        sub_trace = None if trace_dir is None else trace_dir / "sub"
+        sub_result = run_agent(
+            subtask,
+            sub_workspace,
+            llm,
+            max_steps=sub_max_steps,
+            trace_dir=sub_trace,
+            system_prompt=system_prompt,
+            output_limit=output_limit,
+            context_limit=context_limit,
+            allowed=allowed,
+            enable_delegate=False,
+        )
+        text = f"{sub_result.answer}\n子循环轮数：{sub_result.steps}"
+        if sub_result.status != "final":
+            raise ToolError(f"子任务失败：{text}")
+        return text
+
+    registry = ToolRegistry(
+        workspace,
+        allowed,
+        enable_delegate=enable_delegate,
+        delegate_handler=_delegate if enable_delegate else None,
+    )
     recorder = TraceRecorder()
     recorder.user(task)
     messages = [

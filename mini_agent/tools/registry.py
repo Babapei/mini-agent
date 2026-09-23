@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mini_agent.tools.base import ALL_PERMISSIONS, Tool, ToolError, ToolResult, validate_arguments
+from mini_agent.tools.base import ALL_PERMISSIONS, Handler, Tool, ToolError, ToolResult, validate_arguments
+from mini_agent.tools.delegate import make_delegate
 from mini_agent.tools.calculator import CALCULATOR
 from mini_agent.tools.read_file import READ_FILE
 from mini_agent.tools.search_text import SEARCH_TEXT
@@ -13,13 +14,22 @@ from mini_agent.tools.write_file import WRITE_FILE
 
 
 class ToolRegistry:
-    def __init__(self, workspace: Path, allowed: set[str] | None = None) -> None:
+    def __init__(
+        self,
+        workspace: Path,
+        allowed: set[str] | None = None,
+        *,
+        enable_delegate: bool = False,
+        delegate_handler: Handler | None = None,
+    ) -> None:
         self.workspace = workspace.resolve()
         self.allowed = set(ALL_PERMISSIONS if allowed is None else allowed)
-        self._tools: dict[str, Tool] = {
-            tool.name: tool
-            for tool in (READ_FILE, WRITE_FILE, SEARCH_TEXT, CALCULATOR, TOOL_SEARCH)
-        }
+        tools = [READ_FILE, WRITE_FILE, SEARCH_TEXT, CALCULATOR, TOOL_SEARCH]
+        if enable_delegate:
+            if delegate_handler is None:
+                raise ValueError("打开 delegate 时必须提供处理函数")
+            tools.append(make_delegate(delegate_handler))
+        self._tools: dict[str, Tool] = {tool.name: tool for tool in tools}
 
     def schemas(self) -> list[dict]:
         return [tool.schema() for tool in self._tools.values()]

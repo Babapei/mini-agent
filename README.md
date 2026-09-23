@@ -1,6 +1,6 @@
 # Mini Agent
 
-一个用 Python 实现的命令行 Agent。它接收自然语言任务，自己决定调用 `read_file`、`write_file`、`search_text` 和 `calculator`，再根据工具结果决定下一步。Mock 和 OpenAI 兼容接口共用同一个主循环。
+一个用 Python 实现的命令行 Agent。它接收自然语言任务，自己决定调用 `read_file`、`write_file`、`search_text` 和 `calculator`，再根据工具结果决定下一步。`tool_search` 可以查找这些工具的说明。`delegate` 默认关闭，加上 `--sub-agent` 才能把一句子任务交给下一层。Mock 和 OpenAI 兼容接口共用同一个主循环。
 
 设计、阶段记录和门禁分别在 [docs/DESIGN.md](docs/DESIGN.md)、[docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md) 和 [docs/QUALITY_GATES.md](docs/QUALITY_GATES.md)。
 
@@ -15,7 +15,7 @@ ths-written-test/
 ├── mini_agent/                         # Agent 程序本身
 │   ├── __init__.py                     # 标记这是一个 Python 包
 │   ├── __main__.py                     # 让 python -m mini_agent 能启动
-│   ├── cli.py                          # 解析命令行参数，调用主循环，打印最终答案
+│   ├── cli.py                          # 解析命令行参数。可开关：--allow、--no-stream、--sub-agent
 │   ├── tasks.py                        # 四个固定任务的原文。Mock 和实跑脚本共用
 │   ├── agent/
 │   │   ├── __init__.py
@@ -33,6 +33,8 @@ ths-written-test/
 │   │   ├── write_file.py               # 把文本写入 workspace
 │   │   ├── search_text.py              # 在 workspace 里搜索一段文字，返回「文件:行号:内容」
 │   │   ├── calculator.py               # 只做加减乘除。不使用 eval
+│   │   ├── tool_search.py              # 按字面量查找已有工具的名称和说明
+│   │   ├── delegate.py                 # 子任务工具。默认不注册，--sub-agent 才启用，且只有一层
 │   │   └── sandbox.py                  # 禁止读到 workspace 外面，挡住 ../ 和越界符号链接
 │   └── trace/
 │       ├── __init__.py
@@ -62,7 +64,7 @@ ths-written-test/
 ├── docs/                               # 项目文档和运行记录。Agent 不会把这里当作用户文件
 │   ├── DESIGN.md                       # 设计说明：循环、工具、何时结束、失败怎么办
 │   ├── PROJECT_PLAN.md                 # 基础阶段计划，以及每一阶段做到了哪里
-│   ├── EXTENSION_PLAN.md               # 拓展阶段计划。权限、计划、压缩、流式输出、子代理，按这个顺序做
+│   ├── EXTENSION_PLAN.md               # 拓展阶段计划。E1 到 E8 已完成，完成记录写在每一节末尾
 │   ├── DECISIONS.md                    # 已经定下的选择。多轮对话不做，拓展项已排期
 │   ├── QUALITY_GATES.md                # 进入下一阶段前要满足的检查
 │   ├── TASKS.md                        # 四个任务的提示词和预期结果
@@ -136,7 +138,7 @@ python3 scripts/run_tasks.py --llm openai
 python3 -m pytest
 ```
 
-最近一次结果是 26 个测试通过，Mock 任务脚本通过。`tests/` 检查的是程序行为，不代替下面的真实模型实跑。
+最近一次结果是 44 个测试通过，Mock 任务脚本通过。`tests/` 检查的是程序行为，不代替下面的真实模型实跑。
 
 ## 单独执行一条任务
 
@@ -151,8 +153,11 @@ python3 -m mini_agent run "找出 workspace 目录中所有 TODO，按照文件�
 - `--llm`：`mock` 或 `openai`，默认 `mock`。
 - `--max-steps`：最大决策轮数，默认 12。
 - `--trace-dir`：写入 `trace.md` 和 `trace.jsonl` 的目录。
+- `--allow`：允许的权限，逗号分隔，默认 `read,write,compute`。例如 `--allow read` 时写入会失败，并且不创建文件。
+- `--no-stream`：等任务结束后再打印最终答案。默认会先打印 `tool: 工具名`，再打印最终答案。
+- `--sub-agent`：允许 `delegate`。子循环默认最多 6 轮，不能再委托。默认关闭。
 
-标准输出是最终答案。标准错误打印 `status`、`steps` 和 Trace 目录。workspace 不存在，或真实模型缺少配置时，退出码是 2。
+默认会在工具调用和最终答案产生时就打印。标准错误仍在结束时打印 `status`、`steps` 和 Trace 目录。workspace 不存在，或真实模型缺少配置时，退出码是 2。
 
 ## 真实模型
 
