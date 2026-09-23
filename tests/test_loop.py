@@ -136,6 +136,53 @@ def test_sales_success_has_no_plan_update(tmp_path: Path) -> None:
     assert "Plan Update" not in _headings(result.trace_markdown)
 
 
+def test_compression_keeps_the_latest_tool_result(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    body = "全文标记-" + ("x" * 300)
+    (workspace / "big.txt").write_text(body, encoding="utf-8")
+
+    class RepeatRead:
+        def __init__(self) -> None:
+            self.calls: list[list[Message]] = []
+
+        def decide(self, messages: list[Message], tools: list[dict]) -> Decision:
+            del tools
+            self.calls.append(list(messages))
+            tool_messages = [message for message in messages if message.role == "tool"]
+            if len(tool_messages) >= 2:
+                return Decision(thought="结束", final_answer="结束")
+            return Decision(
+                thought="再读",
+                tool_calls=[ToolCall(name="read_file", arguments={"path": "big.txt"})],
+            )
+
+    llm = RepeatRead()
+    result = run_agent("读两次", workspace, llm, context_limit=200)
+    tool_messages = [message for message in llm.calls[-1] if message.role == "tool"]
+    assert tool_messages[-1].content == body
+    assert tool_messages[0].content.startswith("已压缩：read_file 成功：")
+    assert "压缩了 1 条" in result.trace_markdown
+
+
+def test_short_sales_task_is_not_compressed(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    generate(workspace)
+
+    class Watching(MockLLM):
+        def __init__(self) -> None:
+            self.calls: list[list[str]] = []
+
+        def decide(self, messages: list[Message], tools: list[dict]) -> Decision:
+            self.calls.append([message.content for message in messages])
+            return super().decide(messages, tools)
+
+    llm = Watching()
+    result = run_agent(SALES_TASK, workspace, llm)
+    assert all("已压缩" not in content for call in llm.calls for content in call)
+    assert "Context Compression" not in result.trace_markdown
+
+
 def test_read_only_run_records_write_denial(tmp_path: Path) -> None:
     workspace = tmp_path / "workspace"
     workspace.mkdir()

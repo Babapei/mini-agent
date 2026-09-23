@@ -104,7 +104,7 @@
 
 ## E4：Context Compression
 
-- 状态：未开始
+- 状态：已完成
 - 目标：工具结果变长时，压缩更早的结果，保留最近一条全文。
 - 允许目录：`mini_agent/agent/loop.py`、`tests/test_loop.py`、`docs/DESIGN.md`、本文
 
@@ -125,8 +125,8 @@
 
 完成记录：
 
-- 结果：
-- 遗留问题：
+- 结果：上下文组装抽成 `compress_context`。单条仍按 8000 字截断。全部消息超过 24000 字时，最近一条工具结果保持全文，更早的收成 `已压缩：工具名 成败：首行`。压缩不调用模型。发生压缩时 Trace 写明条数，未超过阈值时 Trace 不增加这一节。`pytest` 34 项通过，`python3 scripts/run_tasks.py --llm mock` 通过。
+- 遗留问题：无。
 
 ## E5：Streaming
 

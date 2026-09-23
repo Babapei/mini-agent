@@ -13,6 +13,8 @@ from mini_agent.trace.recorder import TraceRecorder
 
 DEFAULT_MAX_STEPS = 12
 DEFAULT_OUTPUT_LIMIT = 8000
+DEFAULT_CONTEXT_LIMIT = 24000
+COMPRESSED_PREFIX = "已压缩："
 DEFAULT_SYSTEM_PROMPT = (
     "你是 Mini Agent。只通过工具读取文件、搜索文本、计算和写入文件。"
     "算术必须交给 calculator。路径必须留在 workspace 内。"
@@ -37,6 +39,7 @@ def run_agent(
     trace_dir: Path | None = None,
     system_prompt: str | None = None,
     output_limit: int = DEFAULT_OUTPUT_LIMIT,
+    context_limit: int = DEFAULT_CONTEXT_LIMIT,
     allowed: set[str] | None = None,
 ) -> AgentResult:
     registry = ToolRegistry(workspace, allowed)
@@ -52,6 +55,9 @@ def run_agent(
     last_tool_failed = False
 
     for step in range(1, max_steps + 1):
+        compressed = compress_context(messages, context_limit)
+        if compressed:
+            recorder.compressed(compressed)
         try:
             decision = llm.decide(messages, registry.schemas())
         except LLMError as exc:
@@ -112,6 +118,32 @@ def run_agent(
         return _finish(recorder, trace_dir, "cannot_continue", "无法继续：模型没有给出工具调用或最终答案。", step)
 
     return _finish(recorder, trace_dir, "step_limit", f"无法继续：已达到最大轮数 {max_steps}。", max_steps)
+
+
+def compress_context(messages: list[Message], limit: int) -> int:
+    """超过总长度时，把最近一条之外的工具结果收成一行。不调用模型。"""
+    if sum(len(message.content) for message in messages) <= limit:
+        return 0
+    tool_indexes = [index for index, message in enumerate(messages) if message.role == "tool"]
+    if len(tool_indexes) < 2:
+        return 0
+    count = 0
+    for index in tool_indexes[:-1]:
+        message = messages[index]
+        if message.content.startswith(COMPRESSED_PREFIX):
+            continue
+        first = ""
+        for line in message.content.splitlines():
+            if line.strip():
+                first = line.strip()
+                break
+        if len(first) > 80:
+            first = first[:80]
+        status = "成功" if message.ok else "失败"
+        name = message.name or "tool"
+        message.content = f"{COMPRESSED_PREFIX}{name} {status}：{first}"
+        count += 1
+    return count
 
 
 def _limit_result(result: ToolResult, limit: int) -> ToolResult:

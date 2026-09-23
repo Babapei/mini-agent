@@ -71,6 +71,15 @@ class TraceRecorder:
         self._section("Tool Result", body)
         self.events.append({"type": "tool_result", "ok": result.ok, "content": result.text})
 
+    def context_compression(self, count: int) -> None:
+        self._section("Context Compression", f"压缩了 {count} 条更早的工具结果。")
+        self.events.append({"type": "context_compression", "count": count})
+
+    def compressed(self, count: int) -> None:
+        text = f"压缩了 {count} 条更早的工具结果。"
+        self._section("Context Compression", text)
+        self.events.append({"type": "context_compression", "count": count})
+
     def final(self, status: str, answer: str) -> None:
         self._section("Final Answer", f"status: {status}\n{answer}")
         self.events.append({"type": "final", "status": status, "content": answer})
