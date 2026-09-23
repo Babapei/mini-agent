@@ -1,0 +1,4 @@
+product,quantity,price
+Pen,2,10.5
+Notebook,3,20
+Paper,4,5
