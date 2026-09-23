@@ -23,6 +23,7 @@ class Decision:
     final_answer: str | None = None
     usage: dict | None = None
     plan: str | None = None
+    plan_update: str | None = None
 
 
 @dataclass

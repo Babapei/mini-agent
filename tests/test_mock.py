@@ -83,6 +83,8 @@ def test_recovery_starts_with_missing_file() -> None:
         ],
         [],
     )
+    assert second.plan_update
+    assert "FIXME" in second.plan_update
     assert second.tool_calls[0].name == "search_text"
     assert second.tool_calls[0].arguments == {"query": "FIXME"}
 
@@ -100,6 +102,8 @@ def test_blocked_and_unknown_tasks() -> None:
         [],
     )
     assert after_error.tool_calls == []
+    assert after_error.plan_update
+    assert "不再" in after_error.plan_update
     assert after_error.final_answer is not None
     assert "路径超出 workspace" in after_error.final_answer
 

@@ -182,7 +182,12 @@ def _recovery(done: list[Message]) -> Decision:
     if len(done) == 1:
         if done[0].ok:
             return _final("无法继续：预期 data/missing.txt 不存在，但读取成功。")
-        return _call("缺失文件失败后改为搜索 FIXME", "search_text", {"query": "FIXME"})
+        return _call(
+            "缺失文件失败后改为搜索 FIXME",
+            "search_text",
+            {"query": "FIXME"},
+            plan_update="data/missing.txt 读取失败，改为搜索 FIXME，再读取销售数据并计算。",
+        )
     if len(done) == 2:
         if not done[1].ok:
             return _final(f"无法继续：搜索 FIXME 失败：{done[1].content}")
@@ -222,7 +227,12 @@ def _blocked(user: str, done: list[Message]) -> Decision:
             plan=_PLANS["blocked"],
         )
     if not done[-1].ok:
-        return _final(f"无法继续：{done[-1].content}")
+        answer = f"无法继续：{done[-1].content}"
+        return Decision(
+            thought=answer,
+            final_answer=answer,
+            plan_update="这次调用已经失败，不再用同一路径或同一算式重试。",
+        )
     return _final("无法继续：预期失败的工具调用却成功了，已停止。")
 
 
@@ -241,8 +251,19 @@ def _is_number(value: str) -> bool:
     return True
 
 
-def _call(thought: str, name: str, arguments: dict, plan: str | None = None) -> Decision:
-    return Decision(thought=thought, tool_calls=[ToolCall(name=name, arguments=arguments)], plan=plan)
+def _call(
+    thought: str,
+    name: str,
+    arguments: dict,
+    plan: str | None = None,
+    plan_update: str | None = None,
+) -> Decision:
+    return Decision(
+        thought=thought,
+        tool_calls=[ToolCall(name=name, arguments=arguments)],
+        plan=plan,
+        plan_update=plan_update,
+    )
 
 
 def _final(answer: str) -> Decision:

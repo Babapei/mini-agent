@@ -25,6 +25,10 @@ read_file
 ok: false
 路径超出 workspace：../secret.txt
 
+## Plan Update
+
+这次调用已经失败，不再用同一路径或同一算式重试。
+
 ## Agent Decision
 
 step: 2

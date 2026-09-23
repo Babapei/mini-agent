@@ -49,6 +49,7 @@ def run_agent(
     last_signature: tuple[str, str] | None = None
     streak = 0
     planned = False
+    last_tool_failed = False
 
     for step in range(1, max_steps + 1):
         try:
@@ -61,9 +62,12 @@ def run_agent(
         if decision.tool_calls and not planned and decision.plan:
             recorder.plan(decision.plan)
             planned = True
+        if decision.plan_update and last_tool_failed:
+            recorder.plan_update(decision.plan_update)
         recorder.decision(step, decision)
         if decision.tool_calls:
             messages.append(Message(role="assistant", content=decision.thought, tool_calls=list(decision.tool_calls)))
+            round_failed = False
             for index, call in enumerate(decision.tool_calls, start=1):
                 if not call.id:
                     call.id = f"call-{step}-{index}"
@@ -80,6 +84,7 @@ def run_agent(
                         tool_call_id=call.id,
                     )
                 )
+                round_failed = not shown.ok
                 if shown.ok:
                     last_signature = None
                     streak = 0
@@ -100,6 +105,7 @@ def run_agent(
                         f"错误：{shown.text}"
                     )
                     return _finish(recorder, trace_dir, "cannot_continue", answer, step)
+            last_tool_failed = round_failed
             continue
         if decision.final_answer:
             return _finish(recorder, trace_dir, "final", decision.final_answer, step)

@@ -25,6 +25,10 @@ read_file
 ok: false
 文件不存在：data/missing.txt
 
+## Plan Update
+
+data/missing.txt 读取失败，改为搜索 FIXME，再读取销售数据并计算。
+
 ## Agent Decision
 
 step: 2

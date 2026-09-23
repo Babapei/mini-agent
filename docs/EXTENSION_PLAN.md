@@ -77,7 +77,7 @@
 
 ## E3：对执行计划动态调整
 
-- 状态：未开始
+- 状态：已完成
 - 目标：工具失败后留下一份计划修订，说明下一步为什么改道。
 - 允许目录：`mini_agent/llm/mock.py`、`mini_agent/agent/loop.py`、`mini_agent/trace/`、`tests/test_mock.py`、`tests/test_loop.py`、本文
 - 依赖：E2 已完成。
@@ -99,8 +99,8 @@
 
 完成记录：
 
-- 结果：
-- 遗留问题：
+- 结果：决策增加 `plan_update`。只有上一轮工具失败时，主循环才把它写成 `Plan Update`，并且写在下一次工具调用之前。修订文本本身不调用工具。Mock 的恢复任务在缺失文件失败后写明改去搜索 FIXME；越界任务写明不再用同一路径重试。销售额成功路径没有 `Plan Update`。`pytest` 32 项通过，`python3 scripts/run_tasks.py --llm mock` 通过。
+- 遗留问题：无。
 
 ## E4：Context Compression
 

@@ -5,7 +5,7 @@ from mini_agent.agent.loop import run_agent
 from mini_agent.llm.base import Decision, Message, ToolCall
 from mini_agent.tools.base import READ
 from mini_agent.llm.mock import MockLLM
-from mini_agent.tasks import SALES_TASK, TODO_TASK
+from mini_agent.tasks import RECOVERY_TASK, SALES_TASK, TODO_TASK
 from scripts.generate_workspace import generate
 
 
@@ -115,6 +115,25 @@ def test_long_tool_output_is_truncated(tmp_path: Path) -> None:
     assert result.status == "final"
     assert result.answer.endswith("已截断")
     assert len(result.answer) < 100
+
+
+def test_recovery_updates_plan_after_missing_file(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    generate(workspace)
+    result = run_agent(RECOVERY_TASK, workspace, MockLLM())
+    headings = _headings(result.trace_markdown)
+    update_at = headings.index("Plan Update")
+    assert headings[update_at - 1] == "Tool Result"
+    assert "Tool Call" in headings[update_at + 1 :]
+    assert "改为搜索 FIXME" in result.trace_markdown
+    assert "101" not in result.trace_markdown.split("## Plan Update", 1)[1].split("##", 1)[0]
+
+
+def test_sales_success_has_no_plan_update(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    generate(workspace)
+    result = run_agent(SALES_TASK, workspace, MockLLM())
+    assert "Plan Update" not in _headings(result.trace_markdown)
 
 
 def test_read_only_run_records_write_denial(tmp_path: Path) -> None:
