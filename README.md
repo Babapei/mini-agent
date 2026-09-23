@@ -40,7 +40,7 @@ ths-written-test/
 ├── scripts/
 │   ├── __init__.py                     # 让测试可以导入这两个脚本
 │   ├── generate_workspace.py           # 生成或重置下面的测试材料 workspace/
-│   └── run_tasks.py                    # 连续跑四个任务，检查报告和 Trace，并写 docs/results/mock.md
+│   └── run_tasks.py                    # 连续跑四个任务。固定句子检查只在 --llm mock 时启用
 ├── tests/                              # 自动测试。不产生给用户看的报告
 │   ├── test_workspace.py               # 检查测试材料是否包含 TODO、FIXME、销售数据和失败输入
 │   ├── test_tools.py                   # 检查四个工具、越界路径和非法算式
@@ -114,7 +114,13 @@ python3 scripts/generate_workspace.py
 python3 scripts/run_tasks.py --llm mock
 ```
 
-脚本会重新生成 workspace，依次执行四个任务，并检查输出和 Trace。通过后写到 [docs/results/mock.md](docs/results/mock.md)。Trace 在 `docs/traces/mock/<任务编号>/`。完整链路看 [docs/traces/mock/01-todo/trace.md](docs/traces/mock/01-todo/trace.md)。
+`--llm mock` 会重新生成 workspace，依次执行四个任务，并按 Mock 的固定写法检查报告和 Trace。通过后写到 [docs/results/mock.md](docs/results/mock.md)。逐步过程在 `docs/traces/mock/<任务编号>/`。完整链路看 [docs/traces/mock/01-todo/trace.md](docs/traces/mock/01-todo/trace.md)。
+
+真实模型用下面这条。密钥和地址见后面的「真实模型」一节。它同样会先重置 workspace，再跑四个任务，但只发请求，不检查对错。终端里的「已通过」只表示四次请求都跑完。摘要在 `docs/results/openai.md`，逐步过程在 `docs/traces/openai/<任务编号>/trace.md`。
+
+```text
+python3 scripts/run_tasks.py --llm openai
+```
 
 四个任务的提示词和预期写在 [docs/TASKS.md](docs/TASKS.md)：
 
@@ -129,7 +135,7 @@ python3 scripts/run_tasks.py --llm mock
 python3 -m pytest
 ```
 
-最近一次结果是 26 个测试通过，Mock 任务脚本通过。
+最近一次结果是 26 个测试通过，Mock 任务脚本通过。`tests/` 检查的是程序行为，不代替下面的真实模型实跑。
 
 ## 单独执行一条任务
 
@@ -149,15 +155,21 @@ python3 -m mini_agent run "找出 workspace 目录中所有 TODO，按照文件�
 
 ## 真实模型
 
-适配器调用 `POST ${OPENAI_BASE_URL}/chat/completions`。`OPENAI_BASE_URL` 需要带版本前缀，例如 `https://api.openai.com/v1`。
+适配器调用 `POST {OPENAI_BASE_URL}/chat/completions`。DeepSeek 的地址不带 `/v1`。
 
 ```text
-export OPENAI_API_KEY="..."
-export OPENAI_BASE_URL="https://api.openai.com/v1"
-export OPENAI_MODEL="..."
+export OPENAI_API_KEY="你的 DeepSeek 密钥"
+export OPENAI_BASE_URL="https://api.deepseek.com"
+export OPENAI_MODEL="deepseek-flash"
 python3 scripts/run_tasks.py --llm openai
 ```
 
+`--llm openai` 只向模型发请求，跑完四个任务。它不检查报告措辞，也不判断对错。终端里看到「已通过」只表示四次请求都跑完了。结果要自己看：
+
+- 最终答案摘要：`docs/results/openai.md`
+- 逐步过程：`docs/traces/openai/<任务编号>/trace.md`
+- 写出的文件：`workspace/todo-report.md`、`workspace/report.md`、`workspace/summary.md`
+
 系统提示在 [docs/prompts/system.md](docs/prompts/system.md)。网络错误和 HTTP 5xx 最多再试 2 次。工具返回的业务失败不会在 HTTP 层重试。
 
-本次交付时环境里没有这三个变量，所以没有真实模型 Trace，也没有把 Mock 结果标成真实模型结果。适配器由 `tests/test_openai_adapter.py` 用响应夹具验证，测试不访问网络。
+已经留下的 DeepSeek 过程在 `docs/traces/openai/`。适配器另有 `tests/test_openai_adapter.py`，用录好的响应检查请求格式，不访问网络。

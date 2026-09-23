@@ -50,6 +50,8 @@ def main(argv: list[str] | None = None) -> int:
 
     system_prompt = _system_prompt()
     results: list[str] = [f"# {args.llm} 任务结果", ""]
+    if args.llm != "mock":
+        results.extend(["固定句子检查只在 mock 下启用。本次只记录真实模型的运行结果。", ""])
     failures: list[str] = []
     for task in TASKS:
         trace_dir = trace_root / task["id"]
@@ -60,8 +62,10 @@ def main(argv: list[str] | None = None) -> int:
             trace_dir=trace_dir,
             system_prompt=system_prompt,
         )
-        problems = _check(task, workspace, result)
+        problems = _check(task, workspace, result) if args.llm == "mock" else []
         status = "通过" if not problems else "失败"
+        if args.llm != "mock":
+            status = "已记录"
         results.append(f"## {task['id']}")
         results.append("")
         results.append(f"- 状态：{result.status}")
@@ -88,6 +92,7 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _check(task: dict, workspace: Path, result) -> list[str]:
+    """按 Mock 的固定写法验收。只给 --llm mock 调用。"""
     problems: list[str] = []
     headings = re.findall(r"^## (.+)$", result.trace_markdown, re.MULTILINE)
     sequence = (
