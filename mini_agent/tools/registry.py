@@ -8,6 +8,7 @@ from mini_agent.tools.base import ALL_PERMISSIONS, Tool, ToolError, ToolResult, 
 from mini_agent.tools.calculator import CALCULATOR
 from mini_agent.tools.read_file import READ_FILE
 from mini_agent.tools.search_text import SEARCH_TEXT
+from mini_agent.tools.tool_search import TOOL_SEARCH
 from mini_agent.tools.write_file import WRITE_FILE
 
 
@@ -17,7 +18,7 @@ class ToolRegistry:
         self.allowed = set(ALL_PERMISSIONS if allowed is None else allowed)
         self._tools: dict[str, Tool] = {
             tool.name: tool
-            for tool in (READ_FILE, WRITE_FILE, SEARCH_TEXT, CALCULATOR)
+            for tool in (READ_FILE, WRITE_FILE, SEARCH_TEXT, CALCULATOR, TOOL_SEARCH)
         }
 
     def schemas(self) -> list[dict]:

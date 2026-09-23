@@ -98,6 +98,24 @@ def test_unknown_tool_and_bad_arguments_do_not_raise(tmp_path: Path) -> None:
     assert "未知参数" in extra.error
 
 
+def test_tool_search_finds_calculator_and_rejects_empty_query(tmp_path: Path) -> None:
+    registry = _registry(tmp_path)
+    names = {schema["name"] for schema in registry.schemas()}
+    assert {"read_file", "write_file", "search_text", "calculator"} <= names
+
+    found = registry.execute("tool_search", {"query": "计算"})
+    assert found.ok
+    assert "calculator：" in found.output
+
+    empty = registry.execute("tool_search", {"query": "   "})
+    assert not empty.ok
+    assert "查询不能为空" in empty.error
+
+    missing = registry.execute("tool_search", {"query": "不存在的工具"})
+    assert missing.ok
+    assert missing.output == ""
+
+
 def test_read_only_permission_blocks_write_but_allows_read_and_search(tmp_path: Path) -> None:
     workspace = tmp_path / "workspace"
     workspace.mkdir()

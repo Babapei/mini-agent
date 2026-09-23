@@ -183,7 +183,7 @@
 
 ## E7：Tool Search
 
-- 状态：未开始
+- 状态：已完成
 - 目标：增加一个 `tool_search`，按字面量查找已有工具的名称和说明。
 - 允许目录：`mini_agent/tools/`、`tests/test_tools.py`、`docs/prompts/system.md`、本文
 
@@ -203,8 +203,8 @@
 
 完成记录：
 
-- 结果：
-- 遗留问题：
+- 结果：新增只读工具 `tool_search`，按字面量匹配工具名和说明。`计算` 能找到 `calculator`。空查询失败。找不到时返回空文本，不抛异常。四个旧工具的 Schema 仍然全部发给模型，Mock 四个任务不调用 `tool_search` 也通过。系统提示说明工具少时直接调用。`pytest` 41 项通过，`python3 scripts/run_tasks.py --llm mock` 通过。
+- 遗留问题：无。
 
 ## E8：Sub Agent
 
