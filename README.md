@@ -100,11 +100,13 @@ python3 -m pip install pytest
 
 ## 生成测试材料
 
+每次重新测试前先运行一次，清掉上一次写出的报告。否则真实模型会在 `workspace/` 里看到旧的 `report.md` 和 `summary.md`，等于提前看见答案。
+
 ```text
 python3 scripts/generate_workspace.py
 ```
 
-这会覆盖 `workspace/` 里的源文件，并删掉上一次任务留下的 `todo-report.md`、`report.md` 和 `summary.md`。`data/missing.txt` 故意不存在。
+这会覆盖 `workspace/` 里的源文件，并删除 `todo-report.md`、`report.md` 和 `summary.md`。`data/missing.txt` 故意不存在。
 
 ## 运行固定任务
 
