@@ -11,17 +11,21 @@
 5. 计算器使用语法树。不使用 `eval`。
 6. 依赖保持在 Python 标准库。测试使用 pytest。
 7. 任务提示词集中放在 `mini_agent/tasks.py`。Mock 分类和实跑脚本使用同一批字符串，避免文档和实现各写一套。
-8. `OPENAI_BASE_URL` 包含版本前缀，程序只拼接 `/chat/completions`。
+8. 程序只在 `OPENAI_BASE_URL` 后面拼接 `/chat/completions`。DeepSeek 使用 `https://api.deepseek.com`，不加 `/v1`。OpenAI 官方地址本身带 `/v1`。
+9. 基础阶段结束后做拓展。顺序写在 `docs/EXTENSION_PLAN.md`：权限、计划、计划修订、上下文压缩、流式输出、失败恢复提示、工具检索、子代理。一次只做一个阶段。
+10. 多轮对话仍然不做。拓展不把一句任务变成可以接着追问的会话。
 
-## 明确不做
+## 基础阶段曾缓做、现已排期
+
+下面这些在基础阶段写过「明确不做」，是为了先收住必做范围。拓展阶段按 EXTENSION_PLAN 实施，不再视为放弃：
 
 - Sub Agent
 - Streaming
 - 上下文压缩
 - Tool Search
-- 动态多分支规划
+- 对执行计划动态调整
 
-这些功能不改变第四题的基础验收。写进主循环会让阶段边界变模糊，因此本期不实现。
+Tool Permission、失败自动恢复提示、Plan 也在拓展计划里。Schema、参数校验、Trace、路径沙箱、超时、网络重试和 token 记录已经在基础阶段完成，不重复做。
 
 ## 分类优先级
 

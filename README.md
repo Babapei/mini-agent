@@ -61,8 +61,9 @@ ths-written-test/
 │   └── summary.md                      # 任务 3 跑完后写出的失败恢复汇总
 ├── docs/                               # 项目文档和运行记录。Agent 不会把这里当作用户文件
 │   ├── DESIGN.md                       # 设计说明：循环、工具、何时结束、失败怎么办
-│   ├── PROJECT_PLAN.md                 # 分阶段计划，以及每一阶段做到了哪里
-│   ├── DECISIONS.md                    # 已经定下的选择，以及明确不做的功能
+│   ├── PROJECT_PLAN.md                 # 基础阶段计划，以及每一阶段做到了哪里
+│   ├── EXTENSION_PLAN.md               # 拓展阶段计划。权限、计划、压缩、流式输出、子代理，按这个顺序做
+│   ├── DECISIONS.md                    # 已经定下的选择。多轮对话不做，拓展项已排期
 │   ├── QUALITY_GATES.md                # 进入下一阶段前要满足的检查
 │   ├── TASKS.md                        # 四个任务的提示词和预期结果
 │   ├── AI_DIALOGUE.md                  # 和 AI 编程工具的主要对话过程

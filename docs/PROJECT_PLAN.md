@@ -12,7 +12,9 @@
 
 ## 明确不做
 
-Sub Agent、Streaming、上下文压缩、Tool Search、动态多分支规划。路径沙箱、Schema 校验、Trace、轮数上限、失败重试上限、token 记录属于基础质量，放在阶段 2 到阶段 5。
+多轮对话不在范围内。一句任务结束，进程退出。
+
+基础阶段先不做、现已列入拓展的有：Tool Permission、Plan、计划动态调整、上下文压缩、Streaming、失败自动恢复提示、Tool Search、Sub Agent。顺序和步骤见 [EXTENSION_PLAN.md](EXTENSION_PLAN.md)。路径沙箱、Schema 校验、Trace、轮数上限、失败重试上限、token 记录已经在阶段 2 到阶段 7 完成。
 
 ## 阶段 0：计划书与设计冻结
 
@@ -203,7 +205,7 @@ python3 scripts/run_tasks.py --llm mock
 
 ## 阶段 7：真实模型实跑与文档收口
 
-- 状态：已完成（真实模型实跑未执行）
+- 状态：已完成
 - 目标：有密钥则实跑；无密钥则明确记录未执行。收口 README 和 AI_USAGE。
 - 允许目录：`README.md`、`AI_USAGE.md`、`docs/AI_DIALOGUE.md`、`docs/DESIGN.md`、`docs/traces/openai/`、本文
 - 禁止：编造真实模型 Trace。
@@ -232,8 +234,23 @@ python3 scripts/run_tasks.py --llm openai
 
 完成记录：
 
-- 结果：`python3 -m pytest` 为 26 passed。`python3 scripts/run_tasks.py --llm mock` 通过。`python3 scripts/run_tasks.py --llm openai` 退出码 2，输出「缺少环境变量：OPENAI_API_KEY、OPENAI_BASE_URL、OPENAI_MODEL」。没有 `docs/traces/openai/`。
-- 遗留问题：真实模型实跑未执行，原因是环境没有上述三个变量。
+- 结果：Mock 四个任务通过。DeepSeek 用 `deepseek-flash` 跑完四个任务，Trace 在 `docs/traces/openai/`。真实模型只记录结果，不按 Mock 的固定句子判对错。前三个任务写出了报告，越界任务在不调用工具的情况下说明不能继续。
+- 遗留问题：无。基础阶段到此结束。
+
+## 拓展阶段
+
+状态以 [EXTENSION_PLAN.md](EXTENSION_PLAN.md) 为准。基础阶段的防走偏规则继续有效。顺序是：
+
+1. E1 Tool Permission
+2. E2 Plan
+3. E3 对执行计划动态调整
+4. E4 Context Compression
+5. E5 Streaming
+6. E6 Tool 调用失败自动恢复
+7. E7 Tool Search
+8. E8 Sub Agent
+
+当前全部为未开始。E3 依赖 E2，E6 依赖 E3，E8 依赖 E1 和 E2，并且默认关闭。
 
 ## 第四题交付清单
 
