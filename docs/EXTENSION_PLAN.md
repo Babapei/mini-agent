@@ -25,7 +25,7 @@
 
 ## E1：Tool Permission
 
-- 状态：未开始
+- 状态：已完成
 - 目标：每个工具声明自己是只读、可写还是计算。调用前按本次运行允许的权限拒绝，不执行工具。
 - 允许目录：`mini_agent/tools/`、`mini_agent/cli.py`、`mini_agent/agent/loop.py`、`tests/test_tools.py`、`tests/test_loop.py`、本文
 
@@ -46,8 +46,8 @@
 
 完成记录：
 
-- 结果：
-- 遗留问题：
+- 结果：工具规格带 `permission`。`read_file`、`search_text` 为 `read`，`write_file` 为 `write`，`calculator` 为 `compute`。注册表在执行前检查本次允许的权限，拒绝时返回 `权限不足：<工具名> 需要 <权限>`，不调用处理函数。CLI 增加 `--allow`，默认 `read,write,compute`。只读测试确认 `write_file` 不创建文件，`read_file` 和 `search_text` 仍成功，拒绝文本进入 Trace。路径越界仍是原来的沙箱错误。`pytest` 30 项通过，`python3 scripts/run_tasks.py --llm mock` 通过。
+- 遗留问题：无。
 
 ## E2：Plan
 

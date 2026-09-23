@@ -3,6 +3,7 @@ from pathlib import Path
 
 from mini_agent.agent.loop import run_agent
 from mini_agent.llm.base import Decision, Message, ToolCall
+from mini_agent.tools.base import READ
 from mini_agent.llm.mock import MockLLM
 from mini_agent.tasks import SALES_TASK, TODO_TASK
 from scripts.generate_workspace import generate
@@ -111,3 +112,23 @@ def test_long_tool_output_is_truncated(tmp_path: Path) -> None:
     assert result.status == "final"
     assert result.answer.endswith("已截断")
     assert len(result.answer) < 100
+
+
+def test_read_only_run_records_write_denial(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+
+    class WriteOnce:
+        def decide(self, messages: list[Message], tools: list[dict]) -> Decision:
+            del tools
+            if any(message.role == "tool" for message in messages):
+                return Decision(thought="停止", final_answer="写入被拒绝")
+            return Decision(
+                thought="尝试写入",
+                tool_calls=[ToolCall(name="write_file", arguments={"path": "out.md", "content": "nope"})],
+            )
+
+    result = run_agent("只读写入", workspace, WriteOnce(), allowed={READ})
+    assert result.status == "final"
+    assert "权限不足：write_file 需要 write" in result.trace_markdown
+    assert not (workspace / "out.md").exists()

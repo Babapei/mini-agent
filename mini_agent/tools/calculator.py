@@ -84,4 +84,5 @@ CALCULATOR = Tool(
         "additionalProperties": False,
     },
     handler=calculator,
+    permission="compute",
 )

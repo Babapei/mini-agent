@@ -37,8 +37,9 @@ def run_agent(
     trace_dir: Path | None = None,
     system_prompt: str | None = None,
     output_limit: int = DEFAULT_OUTPUT_LIMIT,
+    allowed: set[str] | None = None,
 ) -> AgentResult:
-    registry = ToolRegistry(workspace)
+    registry = ToolRegistry(workspace, allowed)
     recorder = TraceRecorder()
     recorder.user(task)
     messages = [

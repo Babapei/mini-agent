@@ -31,4 +31,5 @@ WRITE_FILE = Tool(
         "additionalProperties": False,
     },
     handler=write_file,
+    permission="write",
 )

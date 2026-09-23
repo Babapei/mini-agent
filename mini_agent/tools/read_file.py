@@ -30,4 +30,5 @@ READ_FILE = Tool(
         "additionalProperties": False,
     },
     handler=read_file,
+    permission="read",
 )

@@ -10,6 +10,7 @@ from mini_agent.agent.loop import run_agent
 from mini_agent.llm.base import LLMError
 from mini_agent.llm.mock import MockLLM
 from mini_agent.llm.openai_compatible import OpenAICompatibleLLM
+from mini_agent.tools.base import parse_permissions
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -21,6 +22,11 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--llm", choices=("mock", "openai"), default="mock")
     run.add_argument("--max-steps", type=int, default=12, help="最大决策轮数")
     run.add_argument("--trace-dir", default="docs/traces", help="写入 trace.md 和 trace.jsonl 的目录")
+    run.add_argument(
+        "--allow",
+        default="read,write,compute",
+        help="允许的权限，逗号分隔：read,write,compute。默认全部允许",
+    )
     args = parser.parse_args(argv)
     return _run(args)
 
@@ -35,7 +41,8 @@ def _run(args: argparse.Namespace) -> int:
         return 2
     try:
         llm = _build_llm(args.llm)
-    except LLMError as exc:
+        allowed = parse_permissions(args.allow)
+    except (LLMError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 2
     result = run_agent(
@@ -45,6 +52,7 @@ def _run(args: argparse.Namespace) -> int:
         max_steps=args.max_steps,
         trace_dir=Path(args.trace_dir),
         system_prompt=_load_system_prompt(),
+        allowed=allowed,
     )
     print(result.answer, flush=True)
     print(f"status: {result.status}", file=sys.stderr)

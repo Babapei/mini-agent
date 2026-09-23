@@ -62,4 +62,5 @@ SEARCH_TEXT = Tool(
         "additionalProperties": False,
     },
     handler=search_text,
+    permission="read",
 )

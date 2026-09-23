@@ -24,6 +24,20 @@ class ToolResult:
 
 Handler = Callable[[Path, dict], str]
 
+READ = "read"
+WRITE = "write"
+COMPUTE = "compute"
+ALL_PERMISSIONS = frozenset({READ, WRITE, COMPUTE})
+
+
+def parse_permissions(raw: str) -> set[str]:
+    items = {part.strip() for part in raw.split(",") if part.strip()}
+    unknown = items - ALL_PERMISSIONS
+    if not items or unknown:
+        names = "、".join(sorted(ALL_PERMISSIONS))
+        raise ValueError(f"权限必须是 {names}，用逗号分隔")
+    return items
+
 
 @dataclass(frozen=True)
 class Tool:
@@ -31,12 +45,14 @@ class Tool:
     description: str
     parameters: dict
     handler: Handler
+    permission: str
 
     def schema(self) -> dict:
         return {
             "name": self.name,
             "description": self.description,
             "parameters": self.parameters,
+            "permission": self.permission,
         }
 
 

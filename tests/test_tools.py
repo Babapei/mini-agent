@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from mini_agent.tools.base import READ
 from mini_agent.tools.registry import ToolRegistry
 
 
@@ -95,3 +96,31 @@ def test_unknown_tool_and_bad_arguments_do_not_raise(tmp_path: Path) -> None:
     extra = registry.execute("read_file", {"path": "notes.txt", "mode": "all"})
     assert not extra.ok
     assert "未知参数" in extra.error
+
+
+def test_read_only_permission_blocks_write_but_allows_read_and_search(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "notes.txt").write_text("TODO: 写测试\n", encoding="utf-8")
+    registry = ToolRegistry(workspace, allowed={READ})
+
+    denied = registry.execute("write_file", {"path": "out.md", "content": "nope"})
+    assert not denied.ok
+    assert denied.error == "权限不足：write_file 需要 write"
+    assert not (workspace / "out.md").exists()
+
+    assert registry.execute("calculator", {"expression": "1+1"}).error == "权限不足：calculator 需要 compute"
+    assert registry.execute("read_file", {"path": "notes.txt"}).ok
+    found = registry.execute("search_text", {"query": "TODO"})
+    assert found.ok
+    assert "notes.txt:1:TODO: 写测试" in found.output
+
+
+def test_allowed_write_still_rejects_path_escape(tmp_path: Path) -> None:
+    registry = _registry(tmp_path)
+    outside = tmp_path / "secret.txt"
+    result = registry.execute("write_file", {"path": "../secret.txt", "content": "nope"})
+    assert not result.ok
+    assert "路径超出 workspace" in result.error
+    assert "权限不足" not in result.error
+    assert not outside.exists()
