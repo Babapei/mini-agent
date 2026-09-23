@@ -3,6 +3,7 @@
 {"type": "agent_decision", "step": 1, "thought": "先读取任务指定的文件", "tool_calls": [{"id": "", "name": "read_file", "arguments": {"path": "data/missing.txt"}}], "final_answer": null, "usage": null}
 {"type": "tool_call", "id": "call-1-1", "name": "read_file", "arguments": {"path": "data/missing.txt"}}
 {"type": "tool_result", "ok": false, "content": "文件不存在：data/missing.txt"}
+{"type": "recovery_hint", "content": "恢复提示：文件不存在。可以用 search_text 按文件名查找，不要用同一路径再读一次。"}
 {"type": "plan_update", "content": "data/missing.txt 读取失败，改为搜索 FIXME，再读取销售数据并计算。"}
 {"type": "agent_decision", "step": 2, "thought": "缺失文件失败后改为搜索 FIXME", "tool_calls": [{"id": "", "name": "search_text", "arguments": {"query": "FIXME"}}], "final_answer": null, "usage": null}
 {"type": "tool_call", "id": "call-2-1", "name": "search_text", "arguments": {"query": "FIXME"}}

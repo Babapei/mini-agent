@@ -25,6 +25,10 @@ read_file
 ok: false
 文件不存在：data/missing.txt
 
+## Recovery Hint
+
+恢复提示：文件不存在。可以用 search_text 按文件名查找，不要用同一路径再读一次。
+
 ## Plan Update
 
 data/missing.txt 读取失败，改为搜索 FIXME，再读取销售数据并计算。

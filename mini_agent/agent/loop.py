@@ -115,6 +115,15 @@ def run_agent(
                 else:
                     last_signature = signature
                     streak = 1
+                if (
+                    streak == 1
+                    and call.name == "read_file"
+                    and "文件不存在" in shown.text
+                    and "路径超出" not in shown.text
+                ):
+                    hint = "恢复提示：文件不存在。可以用 search_text 按文件名查找，不要用同一路径再读一次。"
+                    messages.append(Message(role="user", content=hint))
+                    recorder.recovery_hint(hint)
                 if streak >= 2:
                     answer = (
                         "无法继续：同一工具和参数连续失败 2 次。"

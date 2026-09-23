@@ -80,6 +80,10 @@ class TraceRecorder:
         self._section("Context Compression", text)
         self.events.append({"type": "context_compression", "count": count})
 
+    def recovery_hint(self, text: str) -> None:
+        self._section("Recovery Hint", text)
+        self.events.append({"type": "recovery_hint", "content": text})
+
     def final(self, status: str, answer: str) -> None:
         self._section("Final Answer", f"status: {status}\n{answer}")
         self.events.append({"type": "final", "status": status, "content": answer})

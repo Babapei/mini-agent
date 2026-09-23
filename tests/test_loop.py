@@ -123,7 +123,7 @@ def test_recovery_updates_plan_after_missing_file(tmp_path: Path) -> None:
     result = run_agent(RECOVERY_TASK, workspace, MockLLM())
     headings = _headings(result.trace_markdown)
     update_at = headings.index("Plan Update")
-    assert headings[update_at - 1] == "Tool Result"
+    assert headings.index("Tool Result") < update_at
     assert "Tool Call" in headings[update_at + 1 :]
     assert "改为搜索 FIXME" in result.trace_markdown
     assert "101" not in result.trace_markdown.split("## Plan Update", 1)[1].split("##", 1)[0]
@@ -239,6 +239,51 @@ def test_stream_prints_tool_name_before_answer(tmp_path: Path, capsys) -> None:
     captured = capsys.readouterr()
     assert code == 0
     assert captured.out.index("tool: search_text") < captured.out.index("todo-report.md")
+
+
+def test_missing_file_hint_is_visible_and_does_not_search(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    seen: list[list[Message]] = []
+
+    class ReadMissing:
+        def decide(self, messages: list[Message], tools: list[dict]) -> Decision:
+            del tools
+            seen.append(list(messages))
+            if any(message.role == "tool" for message in messages):
+                return Decision(thought="停止", final_answer="看到恢复提示")
+            return Decision(
+                thought="读取",
+                tool_calls=[ToolCall(name="read_file", arguments={"path": "data/missing.txt"})],
+            )
+
+    result = run_agent("读取缺失文件", workspace, ReadMissing())
+    assert any("恢复提示" in message.content for message in seen[-1])
+    headings = _headings(result.trace_markdown)
+    assert headings.count("Tool Call") == 1
+    assert "read_file" in result.trace_markdown
+    assert "Recovery Hint" in result.trace_markdown
+
+
+def test_path_escape_does_not_add_recovery_hint(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    seen: list[list[Message]] = []
+
+    class ReadOutside:
+        def decide(self, messages: list[Message], tools: list[dict]) -> Decision:
+            del tools
+            seen.append(list(messages))
+            if any(message.role == "tool" for message in messages):
+                return Decision(thought="停止", final_answer="越界")
+            return Decision(
+                thought="读取",
+                tool_calls=[ToolCall(name="read_file", arguments={"path": "../secret.txt"})],
+            )
+
+    result = run_agent("读取越界文件", workspace, ReadOutside())
+    assert all("恢复提示" not in message.content for message in seen[-1])
+    assert "Recovery Hint" not in result.trace_markdown
 
 
 def test_read_only_run_records_write_denial(tmp_path: Path) -> None:
