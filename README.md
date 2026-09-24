@@ -135,7 +135,7 @@ python3 scripts/run_tasks.py --llm mock
 
 `--llm mock` 会重新生成 workspace，然后按 [docs/TASKS.md](docs/TASKS.md) 文首的表跑。四个基础任务各一次，只读把第 1 句再跑一遍。计划、计划更新、恢复提示在这几份 Trace 里检查，不另跑。压缩、打印顺序、工具查找和一层子代理用本地自动测试，不另存 Trace。四个任务按 Mock 的固定写法验收。通过后写到 [docs/results/mock.md](docs/results/mock.md)。逐步过程在 `docs/traces/mock/`，目录是 `01-todo` 到 `04-blocked`，以及 `e1-readonly`。
 
-真实模型用下面这条。密钥和地址见后面的「真实模型」一节。它会先重置 workspace，再跑四个任务，另外记录只读、工具查找和子代理。这些只记录，不判断对错。同一句不跑第二遍，所以没有单独的 `e2`、`e6` 目录。压缩、打印顺序和子代理的假模型检查仍在本地跑。终端里的「已通过」表示本地检查通过，并且真实模型的请求都跑完了。摘要在 `docs/results/openai.md`。这条会覆盖 `docs/traces/openai/` 里已有的记录，不会改 `docs/traces/deepseek-e*`。
+真实模型用下面这条。密钥和地址见后面的「真实模型」一节。它会先重置 workspace，再跑四个任务，另外记录只读、工具查找和子代理。这些只记录，不判断对错。同一句不跑第二遍，所以没有单独的 `e2`、`e6` 目录。压缩、打印顺序和子代理的假模型检查仍在本地跑。终端里的「已通过」表示本地检查通过，并且真实模型的请求都跑完了。摘要在 `docs/results/openai.md`。这条会覆盖 `docs/traces/openai/` 里已有的记录，不会改 `docs/traces/deepseek-e*`。把这些结果摘在一处的说明是 [docs/TEST_REPORT.md](docs/TEST_REPORT.md)。
 
 ```text
 python3 scripts/run_tasks.py --llm openai
