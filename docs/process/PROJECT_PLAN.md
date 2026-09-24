@@ -234,7 +234,7 @@ python3 scripts/run_tasks.py --llm openai
 
 完成记录：
 
-- 结果：Mock 四个任务通过。DeepSeek 用 `deepseek-flash` 跑完四个任务，Trace 在 `docs/traces/openai/`。真实模型只记录结果，不按 Mock 的固定句子判对错。前三个任务写出了报告，越界任务在不调用工具的情况下说明不能继续。
+- 结果：Mock 四个任务通过。后来用 `deepseek-flash` 按一次跑完重跑：四个基础任务，以及只读、工具查找和子代理，Trace 在 `docs/traces/openai/`。真实模型只记录，不按 Mock 的固定句子判对错。销售额和恢复任务的合计 `101` 来自计算器。越界任务在 workspace 内搜索并阅读说明，没有读取 `../secret.txt`。只读时 `write_file` 被拒绝。`tool_search` 找到 `calculator` 后算出 `2`。子代理只委托一层，`workspace/out.md` 是 `1 + 1 = 2`。全量 `pytest` 现为 45 项通过。
 - 遗留问题：无。基础阶段到此结束。
 
 ## 拓展阶段

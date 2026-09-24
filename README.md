@@ -58,8 +58,7 @@ ths-written-test/
 │   ├── data/sales.txt                  # 产品、数量、单价。销售额任务读这个文件
 │   ├── data/bad_expr.txt               # 内容是非法算式 2+，用来触发计算器失败
 │   ├── data/missing.txt                # 故意不存在。恢复任务会先读它然后失败
-│   ├── todo-report.md                  # 任务 1 跑完后写出的 TODO 汇总
-│   ├── report.md                       # 任务 2 跑完后写出的销售额报告
+│   ├── report.md                       # 任务 2 跑完后写出的销售额报告。合计 101 来自计算器
 │   ├── summary.md                      # 任务 3 跑完后写出的失败恢复汇总
 │   └── out.md                          # 子代理实跑写出的 1+1 结果。重置材料时不会删除
 ├── docs/                               # 项目文档和运行记录。Agent 不会把这里当作用户文件
@@ -122,7 +121,7 @@ python3 -m pip install pytest
 python3 scripts/generate_workspace.py
 ```
 
-这会覆盖 `workspace/` 里的源文件，并删除 `todo-report.md`、`report.md` 和 `summary.md`。`workspace/out.md` 不在删除名单里。`data/missing.txt` 故意不存在。
+这会覆盖 `workspace/` 里的源文件，并删除 `todo-report.md`、`report.md` 和 `summary.md`。`workspace/out.md` 不在删除名单里。`data/missing.txt` 故意不存在。任务 1 会重新写出 `todo-report.md`。`--llm openai` 的只读运行排在四个任务之后，会先删掉它，又因没有写权限写不回去，所以当前仓库里没有这个文件。写入过程在 `docs/traces/openai/01-todo/trace.md`。
 
 ## 一次跑完
 
@@ -151,7 +150,7 @@ python3 scripts/run_tasks.py --llm openai
 python3 -m pytest
 ```
 
-最近一次结果是 44 个测试通过，Mock 任务脚本通过。`tests/` 检查的是程序行为，不代替下面的真实模型实跑。
+最近一次结果是 45 个测试通过，Mock 任务脚本通过。`tests/` 检查的是程序行为，不代替下面的真实模型实跑。
 
 ## 单独执行一条任务
 
