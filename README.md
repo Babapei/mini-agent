@@ -135,7 +135,7 @@ python3 scripts/run_tasks.py --llm mock
 python3 scripts/run_tasks.py --llm openai
 ```
 
-四个任务的提示词和预期写在 [docs/TASKS.md](docs/TASKS.md)：
+四个基础任务和 E1 到 E8 的提示词、复制即用的命令、以及没有命令时怎么看，写在 [docs/TASKS.md](docs/TASKS.md)：
 
 1. 搜索 TODO，按文件写入 `workspace/todo-report.md`。
 2. 读取 `data/sales.txt`，用计算器求和，写入 `workspace/report.md`。当前合计是 `101`。
