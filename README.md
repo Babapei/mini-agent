@@ -42,7 +42,7 @@ ths-written-test/
 ├── scripts/
 │   ├── __init__.py                     # 让测试可以导入这两个脚本
 │   ├── generate_workspace.py           # 生成或重置下面的测试材料 workspace/
-│   └── run_tasks.py                    # 连续跑四个任务。固定句子检查只在 --llm mock 时启用
+│   └── run_tasks.py                    # 一次跑完四个任务和能在本地确认的拓展项。固定句子检查只在 --llm mock 时启用
 ├── tests/                              # 自动测试。不产生给用户看的报告
 │   ├── test_workspace.py               # 检查测试材料是否包含 TODO、FIXME、销售数据和失败输入
 │   ├── test_tools.py                   # 检查工具、权限、越界路径、非法算式和 tool_search
@@ -68,17 +68,18 @@ ths-written-test/
 │   ├── EXTENSION_PLAN.md               # 拓展阶段计划。E1 到 E8 已完成，完成记录写在每一节末尾
 │   ├── DECISIONS.md                    # 已经定下的选择。多轮对话不做，拓展阶段 E1 到 E8 已完成
 │   ├── QUALITY_GATES.md                # 进入下一阶段前要满足的检查
-│   ├── TASKS.md                        # 四个任务的提示词和预期结果
+│   ├── TASKS.md                        # 四个任务和 E1 到 E8：哪些会再跑、看哪份 Trace、可复制的命令
 │   ├── AI_DIALOGUE.md                  # 和 AI 编程工具的主要对话过程
 │   ├── prompts/system.md               # 交给真实模型的系统提示。Mock 不靠它做决定
-│   ├── results/mock.md                 # Mock 四个任务的摘要：是否通过、轮数、最终答案
-│   ├── results/openai.md               # --llm openai 四个任务的摘要。只记录，不判对错
+│   ├── results/mock.md                 # Mock 一次跑完的摘要：四个任务、只读，以及 E2 到 E8 的检查
+│   ├── results/openai.md               # --llm openai 的摘要。模型结果只记录，不判对错
 │   └── traces/                         # 每次运行的逐步过程
-│       ├── mock/01-todo/               # 脚本任务 1：搜索 TODO 并写报告
-│       ├── mock/02-sales/              # 脚本任务 2：读取销售数据、计算、写报告
-│       ├── mock/03-recovery/           # 脚本任务 3：缺失文件失败后继续搜索和计算
+│       ├── mock/01-todo/               # 脚本任务 1：搜索 TODO 并写报告。Trace 里有 Plan
+│       ├── mock/02-sales/              # 脚本任务 2：读取销售数据、计算、写报告。E2 看这里的 Plan
+│       ├── mock/03-recovery/           # 脚本任务 3：缺失文件后继续。E3、E6 看这里
 │       ├── mock/04-blocked/            # 脚本任务 4：试图读取 workspace 之外的文件后停止
-│       ├── openai/                     # --llm openai 四个固定任务的逐步过程
+│       ├── mock/e1-readonly/           # 脚本把任务 1 再跑一遍，只允许读
+│       ├── openai/                     # --llm openai：四个任务，以及 e1-readonly、e7-tool-search、e8-sub-agent
 │       ├── manual/                     # 早期手动执行 python -m mini_agent run 的过程
 │       ├── e1-readonly/                # Mock 只读运行，写入被拒绝
 │       ├── e5.png                      # DeepSeek 运行时终端先打印 tool: 的截图
@@ -121,21 +122,21 @@ python3 scripts/generate_workspace.py
 
 这会覆盖 `workspace/` 里的源文件，并删除 `todo-report.md`、`report.md` 和 `summary.md`。`workspace/out.md` 不在删除名单里。`data/missing.txt` 故意不存在。
 
-## 运行固定任务
+## 一次跑完
 
 ```text
 python3 scripts/run_tasks.py --llm mock
 ```
 
-`--llm mock` 会重新生成 workspace，依次执行四个任务，并按 Mock 的固定写法检查报告和 Trace。通过后写到 [docs/results/mock.md](docs/results/mock.md)。逐步过程在 `docs/traces/mock/<任务编号>/`。完整链路看 [docs/traces/mock/01-todo/trace.md](docs/traces/mock/01-todo/trace.md)。
+`--llm mock` 会重新生成 workspace，然后按 [docs/TASKS.md](docs/TASKS.md) 文首的表跑。四个基础任务各一次，只读把第 1 句再跑一遍。计划、计划更新、恢复提示在这几份 Trace 里检查，不另跑。压缩、打印顺序、工具查找和一层子代理用本地自动测试，不另存 Trace。四个任务按 Mock 的固定写法验收。通过后写到 [docs/results/mock.md](docs/results/mock.md)。逐步过程在 `docs/traces/mock/`，目录是 `01-todo` 到 `04-blocked`，以及 `e1-readonly`。
 
-真实模型用下面这条。密钥和地址见后面的「真实模型」一节。它同样会先重置 workspace，再跑四个任务，但只发请求，不检查对错。终端里的「已通过」只表示四次请求都跑完。摘要在 `docs/results/openai.md`，逐步过程在 `docs/traces/openai/<任务编号>/trace.md`。
+真实模型用下面这条。密钥和地址见后面的「真实模型」一节。它会先重置 workspace，再跑四个任务，另外记录只读、工具查找和子代理。这些只记录，不判断对错。同一句不跑第二遍，所以没有单独的 `e2`、`e6` 目录。压缩、打印顺序和子代理的假模型检查仍在本地跑。终端里的「已通过」表示本地检查通过，并且真实模型的请求都跑完了。摘要在 `docs/results/openai.md`。这条会覆盖 `docs/traces/openai/` 里已有的记录，不会改 `docs/traces/deepseek-e*`。
 
 ```text
 python3 scripts/run_tasks.py --llm openai
 ```
 
-四个基础任务和 E1 到 E8 的提示词、复制即用的命令、以及没有命令时怎么看，写在 [docs/TASKS.md](docs/TASKS.md)：
+每项和哪一次是同一句、打开哪里看，写在 [docs/TASKS.md](docs/TASKS.md)。四个基础任务是：
 
 1. 搜索 TODO，按文件写入 `workspace/todo-report.md`。
 2. 读取 `data/sales.txt`，用计算器求和，写入 `workspace/report.md`。当前合计是 `101`。
@@ -180,12 +181,13 @@ export OPENAI_MODEL="deepseek-flash"
 python3 scripts/run_tasks.py --llm openai
 ```
 
-`--llm openai` 只向模型发请求，跑完四个任务。它不检查报告措辞，也不判断对错。终端里看到「已通过」只表示四次请求都跑完了。结果要自己看：
+`--llm openai` 向模型发请求，跑四个基础任务，再跑只读、工具查找和子代理。它不检查报告措辞，也不判断对错。计划和恢复提示看四个任务的 Trace。计划更新只有 Mock 会写。压缩和打印顺序不交给模型，仍用本地自动测试。终端里看到「已通过」表示这些请求都跑完，并且本地检查通过。结果要自己看：
 
-- 最终答案摘要：`docs/results/openai.md`
-- 逐步过程：`docs/traces/openai/<任务编号>/trace.md`
-- 写出的文件：`workspace/todo-report.md`、`workspace/report.md`、`workspace/summary.md`
+- 最终答案摘要：`docs/results/openai.md`。模型条目的状态是「已记录」。
+- 四个任务：`docs/traces/openai/01-todo/` 到 `04-blocked/`。
+- 只读、工具查找、子代理：`docs/traces/openai/e1-readonly/`、`e7-tool-search/`、`e8-sub-agent/`。
+- 写出的文件：`workspace/todo-report.md`、`workspace/report.md`、`workspace/summary.md`。子代理还会写 `workspace/out.md`。
 
 系统提示在 [docs/prompts/system.md](docs/prompts/system.md)。网络错误和 HTTP 5xx 最多再试 2 次。工具返回的业务失败不会在 HTTP 层重试。
 
-四个固定任务跑完后，过程在 `docs/traces/openai/`，摘要在 `docs/results/openai.md`。摘要里的状态是「已记录」。拓展项的实跑在 `docs/traces/deepseek-e1/`、`deepseek-e2/`、`deepseek-e6/`、`deepseek-e7/`、`deepseek-e8/`。`docs/traces/e5.png` 是终端先打印 `tool:` 再打印答案的截图。适配器另有 `tests/test_openai_adapter.py`，用录好的响应检查请求格式和流式分片，不访问网络。
+以前单独跑的 DeepSeek 还在 `docs/traces/deepseek-e1/`、`deepseek-e2/`、`deepseek-e6/`、`deepseek-e7/`、`deepseek-e8/`。`deepseek-e2` 和 `deepseek-e6` 与脚本里的第 2、第 3 个任务是同一句，只是目录不同。`docs/traces/e5.png` 是终端先打印 `tool:` 再打印答案的截图。适配器另有 `tests/test_openai_adapter.py`，用录好的响应检查请求格式和流式分片，不访问网络。
