@@ -8,7 +8,7 @@
 - 答案不能绕过工具。Mock 可以按任务关键词选择下一步，但文件内容、搜索命中和求和结果必须来自工具返回值。
 - 每个阶段先核对本文的步骤，再改代码。阶段结束先跑验收命令，通过后把结论写回本文。
 - 只改该阶段允许的目录。发现上一阶段缺陷时，先记入遗留问题，修完并复验后再继续。
-- `AI_USAGE.md` 按阶段追加。
+- `docs/ai/AI_USAGE.md` 按阶段追加。
 
 ## 明确不做
 
@@ -20,16 +20,16 @@
 
 - 状态：已完成
 - 目标：把范围、职责、结束条件和门禁写死。不写业务代码。
-- 允许目录：`docs/`、`AI_USAGE.md`
+- 允许目录：`docs/`、`docs/ai/AI_USAGE.md`
 - 禁止：创建 `mini_agent/`、`workspace/`、`tests/`
 
 步骤：
 
 1. 写成本计划书。
 2. 写 `docs/DESIGN.md`，回答 Loop、Tool 定义、结束条件、防无限调用、失败处理、四层职责、最大限制。
-3. 写 `docs/DECISIONS.md`。
-4. 写 `docs/QUALITY_GATES.md`。
-5. 写 `AI_USAGE.md` 和 `docs/AI_DIALOGUE.md`，记录已经发生的选择。
+3. 写 `docs/process/DECISIONS.md`。
+4. 写 `docs/process/QUALITY_GATES.md`。
+5. 写 `docs/ai/AI_USAGE.md` 和 `docs/ai/AI_DIALOGUE.md`，记录已经发生的选择。
 
 验收：设计说明覆盖 7 问；「明确不做」已写明。
 
@@ -207,7 +207,7 @@ python3 scripts/run_tasks.py --llm mock
 
 - 状态：已完成
 - 目标：有密钥则实跑；无密钥则明确记录未执行。收口 README 和 AI_USAGE。
-- 允许目录：`README.md`、`AI_USAGE.md`、`docs/AI_DIALOGUE.md`、`docs/DESIGN.md`、`docs/traces/openai/`、本文
+- 允许目录：`README.md`、`docs/ai/AI_USAGE.md`、`docs/ai/AI_DIALOGUE.md`、`docs/DESIGN.md`、`docs/traces/openai/`、本文
 - 禁止：编造真实模型 Trace。
 
 步骤：
@@ -261,7 +261,7 @@ E1 到 E8 已完成。E3 依赖 E2，E6 依赖 E3，E8 依赖 E1 和 E2，并且
 - [x] 至少 3 个不同测试任务及实际执行结果
 - [x] 至少一份完整 Agent Trace
 - [x] AI 工具对话过程
-- [x] AI_USAGE.md
+- [x] docs/ai/AI_USAGE.md
 - [x] 设计说明中的 7 个问题
 
 ## 基础能力清单

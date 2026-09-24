@@ -5,7 +5,7 @@
 ## 阶段 0
 
 - `docs/DESIGN.md` 写有 Loop、Tool、结束条件、无限调用、失败处理、四层职责、最大限制。
-- `docs/DECISIONS.md` 写有「明确不做」。
+- `docs/process/DECISIONS.md` 写有「明确不做」。
 - 仓库中还没有 `mini_agent/`。
 
 ## 阶段 1
@@ -56,11 +56,11 @@
 - README 能让人从生成 workspace 跑到 Trace。
 - 真实模型要么有独立 Trace 目录，要么文档明确写未实跑。
 - 交付清单和基础能力清单已勾选。
-- `AI_USAGE.md` 含参与环节、候选人决定、错误判断和修正。
+- `docs/ai/AI_USAGE.md` 含参与环节、候选人决定、错误判断和修正。
 
 ## 拓展阶段
 
-细步骤在 `docs/EXTENSION_PLAN.md`。进入下一拓展阶段前，当前阶段的验收命令已经通过，完成记录已写上。
+细步骤在 `docs/process/EXTENSION_PLAN.md`。进入下一拓展阶段前，当前阶段的验收命令已经通过，完成记录已写上。
 
 ### E1 Tool Permission
 

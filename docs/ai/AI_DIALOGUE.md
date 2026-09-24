@@ -36,12 +36,12 @@ AI 先确认了两个会改变实现的选择。候选人的回答是：
 
 按上述约定先写文档，不创建 `mini_agent/`：
 
-- `docs/PROJECT_PLAN.md`
+- `docs/process/PROJECT_PLAN.md`
 - `docs/DESIGN.md`
-- `docs/DECISIONS.md`
-- `docs/QUALITY_GATES.md`
-- `AI_USAGE.md`
-- `docs/AI_DIALOGUE.md`
+- `docs/process/DECISIONS.md`
+- `docs/process/QUALITY_GATES.md`
+- `docs/ai/AI_USAGE.md`
+- `docs/ai/AI_DIALOGUE.md`
 
 ## 按计划实现
 

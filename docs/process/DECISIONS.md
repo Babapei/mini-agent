@@ -1,6 +1,6 @@
 # 设计决定
 
-只记录会改变实现方向的决定。临时调试细节写入 `AI_USAGE.md`。
+只记录会改变实现方向的决定。临时调试细节写入 `docs/ai/AI_USAGE.md`。
 
 ## 已决定
 
@@ -12,12 +12,12 @@
 6. 依赖保持在 Python 标准库。测试使用 pytest。
 7. 任务提示词集中放在 `mini_agent/tasks.py`。Mock 分类和实跑脚本使用同一批字符串，避免文档和实现各写一套。
 8. 程序只在 `OPENAI_BASE_URL` 后面拼接 `/chat/completions`。DeepSeek 使用 `https://api.deepseek.com`，不加 `/v1`。OpenAI 官方地址本身带 `/v1`。
-9. 基础阶段结束后做拓展。顺序写在 `docs/EXTENSION_PLAN.md`：权限、计划、计划修订、上下文压缩、流式输出、失败恢复提示、工具检索、子代理。一次只做一个阶段。
+9. 基础阶段结束后做拓展。顺序写在 `docs/process/EXTENSION_PLAN.md`：权限、计划、计划修订、上下文压缩、流式输出、失败恢复提示、工具检索、子代理。一次只做一个阶段。
 10. 多轮对话仍然不做。拓展不把一句任务变成可以接着追问的会话。
 
 ## 基础阶段曾缓做、拓展阶段已完成
 
-下面这些在基础阶段写过「明确不做」，是为了先收住必做范围。拓展阶段已经按 `docs/EXTENSION_PLAN.md` 做完：
+下面这些在基础阶段写过「明确不做」，是为了先收住必做范围。拓展阶段已经按 `docs/process/EXTENSION_PLAN.md` 做完：
 
 - Tool Permission：`--allow`，默认三种权限都允许
 - Plan：第一次工具调用前写入 Trace

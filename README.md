@@ -2,7 +2,7 @@
 
 一个用 Python 实现的命令行 Agent。它接收自然语言任务，自己决定调用 `read_file`、`write_file`、`search_text` 和 `calculator`，再根据工具结果决定下一步。`tool_search` 可以查找这些工具的说明。`delegate` 默认关闭，加上 `--sub-agent` 才能把一句子任务交给下一层。Mock 和 OpenAI 兼容接口共用同一个主循环。
 
-设计、阶段记录和门禁分别在 [docs/DESIGN.md](docs/DESIGN.md)、[docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md) 和 [docs/QUALITY_GATES.md](docs/QUALITY_GATES.md)。
+设计在 [docs/DESIGN.md](docs/DESIGN.md)。阶段记录和门禁在 [docs/process/PROJECT_PLAN.md](docs/process/PROJECT_PLAN.md) 和 [docs/process/QUALITY_GATES.md](docs/process/QUALITY_GATES.md)。
 
 ## 项目结构
 
@@ -64,12 +64,15 @@ ths-written-test/
 │   └── out.md                          # 子代理实跑写出的 1+1 结果。重置材料时不会删除
 ├── docs/                               # 项目文档和运行记录。Agent 不会把这里当作用户文件
 │   ├── DESIGN.md                       # 设计说明：循环、工具、何时结束、失败怎么办
-│   ├── PROJECT_PLAN.md                 # 基础阶段计划，以及每一阶段做到了哪里
-│   ├── EXTENSION_PLAN.md               # 拓展阶段计划。E1 到 E8 已完成，完成记录写在每一节末尾
-│   ├── DECISIONS.md                    # 已经定下的选择。多轮对话不做，拓展阶段 E1 到 E8 已完成
-│   ├── QUALITY_GATES.md                # 进入下一阶段前要满足的检查
 │   ├── TASKS.md                        # 四个任务和 E1 到 E8：哪些会再跑、看哪份 Trace、可复制的命令
-│   ├── AI_DIALOGUE.md                  # 和 AI 编程工具的主要对话过程
+│   ├── process/                        # 开发过程。跑程序时用不到
+│   │   ├── PROJECT_PLAN.md             # 基础阶段计划，以及每一阶段做到了哪里
+│   │   ├── EXTENSION_PLAN.md           # 拓展阶段计划。E1 到 E8 已完成，完成记录写在每一节末尾
+│   │   ├── DECISIONS.md                # 已经定下的选择。多轮对话不做，拓展阶段 E1 到 E8 已完成
+│   │   └── QUALITY_GATES.md            # 进入下一阶段前要满足的检查
+│   ├── ai/                             # 和程序运行无关的 AI 协作记录
+│   │   ├── AI_USAGE.md                 # AI 参与了哪些环节、哪些决定是人做的、出过什么错
+│   │   └── AI_DIALOGUE.md              # 和 AI 编程工具的主要对话过程
 │   ├── prompts/system.md               # 交给真实模型的系统提示。Mock 不靠它做决定
 │   ├── results/mock.md                 # Mock 一次跑完的摘要：四个任务、只读，以及 E2 到 E8 的检查
 │   ├── results/openai.md               # --llm openai 的摘要。模型结果只记录，不判对错
@@ -88,13 +91,12 @@ ths-written-test/
 │       ├── deepseek-e6/                # DeepSeek：缺失文件后出现 Recovery Hint
 │       ├── deepseek-e7/                # DeepSeek：tool_search 找到 calculator 后计算 1+1
 │       └── deepseek-e8/                # DeepSeek：--sub-agent。子过程在 sub/
-├── exam_questions/                     # 笔试原题，本仓库只实现了第四题
+├── exam_questions/                     # 笔试原题，本仓库只实现了第四题。交卷时再按题目清单整理
 │   ├── q1.md                           # 原题：日志分析。未实现
 │   ├── q2.md                           # 原题：股票行情看板。未实现
 │   ├── q3.md                           # 原题：训练 Sandbox 调度。未实现
 │   ├── q4.md                           # 原题：Mini Agent。本项目实现的就是这一题
 │   └── q5.md                           # 原题：Kubernetes 故障诊断。未实现
-├── AI_USAGE.md                         # AI 参与了哪些环节、哪些决定是人做的、出过什么错
 ├── pyproject.toml                      # 项目名称、Python 版本、打包范围和 pytest 配置
 ├── README.md                           # 本说明
 ├── .gitignore                          # 告诉 Git 不要提交虚拟环境、缓存和打包产物
