@@ -1,5 +1,7 @@
-# 计算结果
+# 子任务结果
 
-1 + 1 = 2
+子任务：用 calculator 计算 1+1
 
-说明：该结果由下一层 Agent 使用 calculator 工具计算得出（子任务：「用 calculator 计算 1+1」）。
+计算结果：1 + 1 = 2
+
+来源：下一层 Agent 返回的结果（其通过 calculator 工具计算得出）。
