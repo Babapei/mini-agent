@@ -1,0 +1,7 @@
+{"type": "user", "content": "用 calculator 计算 1+1"}
+{"type": "plan", "content": "计划：直接调用 calculator 计算 1+1，然后用结果作答。"}
+{"type": "agent_decision", "step": 1, "thought": "计划：直接调用 calculator 计算 1+1，然后用结果作答。", "tool_calls": [{"id": "call_00_Ab69YOQIGEVqKfYFpbOF4241", "name": "calculator", "arguments": {"expression": "1+1"}}], "final_answer": null, "usage": {"prompt_tokens": 913, "completion_tokens": 77, "total_tokens": 990, "prompt_tokens_details": {"cached_tokens": 768}, "completion_tokens_details": {"reasoning_tokens": 23}, "prompt_cache_hit_tokens": 768, "prompt_cache_miss_tokens": 145}}
+{"type": "tool_call", "id": "call_00_Ab69YOQIGEVqKfYFpbOF4241", "name": "calculator", "arguments": {"expression": "1+1"}}
+{"type": "tool_result", "ok": true, "content": "2"}
+{"type": "agent_decision", "step": 2, "thought": "计算结果：1+1 = 2（来自 calculator 工具）。未写入任何文件。", "tool_calls": [], "final_answer": "计算结果：1+1 = 2（来自 calculator 工具）。未写入任何文件。", "usage": {"prompt_tokens": 1003, "completion_tokens": 20, "total_tokens": 1023, "prompt_tokens_details": {"cached_tokens": 768}, "completion_tokens_details": {"reasoning_tokens": 0}, "prompt_cache_hit_tokens": 768, "prompt_cache_miss_tokens": 235}}
+{"type": "final", "status": "final", "content": "计算结果：1+1 = 2（来自 calculator 工具）。未写入任何文件。"}
