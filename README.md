@@ -2,36 +2,36 @@
 
 一个用 Python 标准库实现的命令行 Agent。它接收一句自然语言任务，由模型决定调用工具还是给出最终答案；程序执行工具后把结果交回模型，再决定下一步，直到完成或确认无法继续。进程随后退出，不做多轮对话。基础工具是 `read_file`、`write_file`、`search_text` 和 `calculator`。文件限制在 `workspace/` 内，计算器不用 `eval`，合计必须来自计算器的返回值。Mock 和 OpenAI 兼容接口走同一个主循环。真实模型用过 DeepSeek（`deepseek-flash`）。
 
-已实现的基础能力：
+> 已实现的基础能力：
 
-1. **Agent 主循环。** 每轮向模型要一次决定，执行后再进入下一轮。
-2. **Tool 定义和注册机制。** 工具放在注册表里，按名称查找。
-3. **Tool 参数解析。** 按 JSON Schema 检查必填项、未知字段和类型。
-4. **Tool 调用。** 一轮里的多个工具按模型给出的顺序执行。
-5. **Tool Result 返回 Agent。** 成功或失败都写回消息，供下一轮使用。
-6. **Agent 根据 Tool Result 判断下一步行为。** 下一步仍由模型决定，循环不替它选择工具。
-7. **支持一次任务中连续调用多个 Tool。**
-8. **最终答案输出。** 没有工具调用的那一轮给出最终答案，并打印到标准输出。
-9. **Agent 执行轮数控制，避免无限循环。** 默认最多 12 轮；同一工具、同一参数连续失败 2 次也会停止。
-10. **Tool 调用失败时能够进行合理处理。** 失败是一条结果，不使进程崩溃。
+<details><summary>Agent 主循环</summary>每轮向模型要一次决定，执行后再进入下一轮。</details>
+<details><summary>Tool 定义和注册机制</summary>工具放在注册表里，按名称查找。</details>
+<details><summary>Tool 参数解析</summary>按 JSON Schema 检查必填项、未知字段和类型。</details>
+<details><summary>Tool 调用</summary>一轮里的多个工具按模型给出的顺序执行。</details>
+<details><summary>Tool Result 返回 Agent</summary>成功或失败都写回消息，供下一轮使用。</details>
+<details><summary>Agent 根据 Tool Result 判断下一步行为</summary>下一步仍由模型决定，循环不替它选择工具。</details>
+<details><summary>支持一次任务中连续调用多个 Tool</summary>一轮决定里可以包含多个工具，按给出的顺序执行。</details>
+<details><summary>最终答案输出</summary>没有工具调用的那一轮给出最终答案，并打印到标准输出。</details>
+<details><summary>Agent 执行轮数控制，避免无限循环</summary>默认最多 12 轮；同一工具、同一参数连续失败 2 次也会停止。</details>
+<details><summary>Tool 调用失败时能够进行合理处理</summary>失败是一条结果，不使进程崩溃。</details>
 
-已实现的增强项：
+> 已实现的增强项：
 
-- **Tool Schema。** 每次请求都把当前工具的名称、说明和参数规格发给模型。
-- **Tool 参数校验。** 缺参数、未知参数或类型不对时返回失败，不执行工具。
-- **Tool Permission。** `read`、`write`、`compute` 默认都允许，可用 `--allow` 收紧。权限不足时不调用处理函数。
-- **Tool 调用失败自动恢复。** `read_file` 报告文件不存在时追加恢复提示，下一步仍由模型决定，程序不代替搜索。
-- **Retry。** 网络错误和 HTTP 5xx 最多再请求 2 次。4xx 和工具本身的失败不重试。
-- **Timeout。** 请求真实模型的超时是 30 秒。
-- **Agent Trace。** 每一步写入 `trace.md` 和 `trace.jsonl`。
-- **Token Usage。** 真实模型返回的 `usage` 写入 Trace。
-- **Context Compression。** 单条工具输出超过 8000 字会截断；全部消息超过 24000 字时，更早的工具结果收成一行，最近一条保持全文。
-- **Plan。** 第一次工具调用之前，决定里若有计划文字，写入 Trace。
-- **Sub Agent。** `--sub-agent` 才启用，只委托一层，子循环最多 6 轮，不能再委托。
-- **Streaming。** 终端默认在调用工具时打印 `tool: 工具名`，可用 `--no-stream` 改回结束时再打印答案。线上 HTTP 仍是一次返回。
-- **防止读取 workspace 之外的文件。** `../`、绝对路径和指向外部的符号链接都会被拒绝。
-- **Tool Search。** `tool_search` 按字面量查找工具名称和说明。四个基础工具不用先搜索也能直接调用。
-- **对执行计划动态调整。** 上一轮最后一个工具失败时，Mock 可写入 `Plan Update`。真实模型的适配器不产生这一节。
+<details><summary>Tool Schema</summary>每次请求都把当前工具的名称、说明和参数规格发给模型。</details>
+<details><summary>Tool 参数校验</summary>缺参数、未知参数或类型不对时返回失败，不执行工具。</details>
+<details><summary>Tool Permission</summary>`read`、`write`、`compute` 默认都允许，可用 `--allow` 收紧。权限不足时不调用处理函数。</details>
+<details><summary>Tool 调用失败自动恢复</summary>`read_file` 报告文件不存在时追加恢复提示，下一步仍由模型决定，程序不代替搜索。</details>
+<details><summary>Retry</summary>网络错误和 HTTP 5xx 最多再请求 2 次。4xx 和工具本身的失败不重试。</details>
+<details><summary>Timeout</summary>请求真实模型的超时是 30 秒。</details>
+<details><summary>Agent Trace</summary>每一步写入 `trace.md` 和 `trace.jsonl`。</details>
+<details><summary>Token Usage</summary>真实模型返回的 `usage` 写入 Trace。</details>
+<details><summary>Context Compression</summary>单条工具输出超过 8000 字会截断；全部消息超过 24000 字时，更早的工具结果收成一行，最近一条保持全文。</details>
+<details><summary>Plan</summary>第一次工具调用之前，决定里若有计划文字，写入 Trace。</details>
+<details><summary>Sub Agent</summary>`--sub-agent` 才启用，只委托一层，子循环最多 6 轮，不能再委托。</details>
+<details><summary>Streaming</summary>终端默认在调用工具时打印 `tool: 工具名`，可用 `--no-stream` 改回结束时再打印答案。线上 HTTP 仍是一次返回。</details>
+<details><summary>防止读取 workspace 之外的文件</summary>`../`、绝对路径和指向外部的符号链接都会被拒绝。</details>
+<details><summary>Tool Search</summary>`tool_search` 按字面量查找工具名称和说明。四个基础工具不用先搜索也能直接调用。</details>
+<details><summary>对执行计划动态调整</summary>上一轮最后一个工具失败时，Mock 可写入 `Plan Update`。真实模型的适配器不产生这一节。</details>
 
 怎么跑、每项看哪份 Trace，写在 [docs/TASKS.md](docs/TASKS.md)。设计在 [docs/DESIGN.md](docs/DESIGN.md)。阶段记录和门禁在 [docs/process/PROJECT_PLAN.md](docs/process/PROJECT_PLAN.md) 和 [docs/process/QUALITY_GATES.md](docs/process/QUALITY_GATES.md)。
 
