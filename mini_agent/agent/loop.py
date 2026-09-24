@@ -113,6 +113,7 @@ def run_agent(
         if decision.tool_calls:
             messages.append(Message(role="assistant", content=decision.thought, tool_calls=list(decision.tool_calls)))
             round_failed = False
+            pending_hints: list[str] = []
             for index, call in enumerate(decision.tool_calls, start=1):
                 if not call.id:
                     call.id = f"call-{step}-{index}"
@@ -152,15 +153,16 @@ def run_agent(
                     and "路径超出" not in shown.text
                 ):
                     hint = "恢复提示：文件不存在。可以用 search_text 按文件名查找，不要用同一路径再读一次。"
-                    messages.append(Message(role="user", content=hint))
-                    recorder.recovery_hint(hint)
+                    pending_hints.append(hint)
                 if streak >= 2:
+                    _append_recovery_hints(messages, recorder, pending_hints)
                     answer = (
                         "无法继续：同一工具和参数连续失败 2 次。"
                         f"工具 {call.name}，参数 {signature[1]}。"
                         f"错误：{shown.text}"
                     )
                     return _finish(recorder, trace_dir, "cannot_continue", answer, step, on_event)
+            _append_recovery_hints(messages, recorder, pending_hints)
             last_tool_failed = round_failed
             continue
         if decision.final_answer:
@@ -168,6 +170,12 @@ def run_agent(
         return _finish(recorder, trace_dir, "cannot_continue", "无法继续：模型没有给出工具调用或最终答案。", step, on_event)
 
     return _finish(recorder, trace_dir, "step_limit", f"无法继续：已达到最大轮数 {max_steps}。", max_steps, on_event)
+
+
+def _append_recovery_hints(messages: list[Message], recorder: TraceRecorder, hints: list[str]) -> None:
+    for hint in hints:
+        messages.append(Message(role="user", content=hint))
+        recorder.recovery_hint(hint)
 
 
 def compress_context(messages: list[Message], limit: int) -> int:

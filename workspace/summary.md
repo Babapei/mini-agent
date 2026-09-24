@@ -1,16 +1,14 @@
-# 汇总报告
+# 任务摘要
 
-## 1. 读取失败原因
-- 读取 `data/missing.txt` 失败：文件不存在（工具返回：文件不存在：data/missing.txt）。
+## 失败原因
+读取 `data/missing.txt` 失败：文件不存在（data/missing.txt）。按恢复提示，改用 search_text 按文件名查找，未再以同一路径重试。
 
-## 2. workspace 中的 FIXME
-- `docs/design.md:6` - FIXME: 运费未计入
-- `src/order.ts:4` - FIXME: 没有处理空数组
+## FIXME 搜索结果
+- docs/design.md:6: - FIXME: 运费未计入
+- src/order.ts:4:   // FIXME: 没有处理空数组
 
-（另：`todo-report.md:30` 提到同一搜索发现 docs/design.md:6 的 FIXME，因不属于 TODO 未计入其报告，此处仍作为 FIXME 命中列出。）
-
-## 3. 销售额
-数据来源：`data/sales.txt`
+## 销售额计算
+数据来源：data/sales.txt
 
 | 产品 | 数量 | 单价 | 小计 |
 | --- | --- | --- | --- |
@@ -20,4 +18,4 @@
 
 计算式：2*10.5 + 3*20 + 4*5 = 101
 
-所有产品销售额之和：101
+**所有产品销售额之和：101**

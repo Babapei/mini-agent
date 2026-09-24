@@ -14,7 +14,7 @@
 
 多轮对话不在范围内。一句任务结束，进程退出。
 
-基础阶段先不做、现已列入拓展的有：Tool Permission、Plan、计划动态调整、上下文压缩、Streaming、失败自动恢复提示、Tool Search、Sub Agent。顺序和步骤见 [EXTENSION_PLAN.md](EXTENSION_PLAN.md)。路径沙箱、Schema 校验、Trace、轮数上限、失败重试上限、token 记录已经在阶段 2 到阶段 7 完成。
+基础阶段先缓做、拓展阶段已经做完的有：Tool Permission、Plan、计划动态调整、上下文压缩、Streaming、失败自动恢复提示、Tool Search、Sub Agent。顺序、步骤和完成记录见 [EXTENSION_PLAN.md](EXTENSION_PLAN.md)。路径沙箱、Schema 校验、Trace、轮数上限、失败重试上限、token 记录已经在阶段 2 到阶段 7 完成。
 
 ## 阶段 0：计划书与设计冻结
 
@@ -152,7 +152,7 @@ python3 -m pytest tests/test_loop.py
 
 ## 阶段 5：真实模型适配器
 
-- 状态：已完成（适配器已测，实跑待密钥）
+- 状态：已完成。适配器当时用夹具测完；真实模型实跑见阶段 7。
 - 目标：OpenAI 兼容接口，并用响应夹具测试，不访问网络。
 - 允许目录：`mini_agent/llm/openai_compatible.py`、`docs/prompts/system.md`、`tests/test_openai_adapter.py`、本文完成记录
 - 禁止：把 Mock Trace 写成真实模型结果。
@@ -160,7 +160,7 @@ python3 -m pytest tests/test_loop.py
 步骤：
 
 1. `POST {OPENAI_BASE_URL}/chat/completions`，工具使用 JSON Schema。
-2. 环境变量：`OPENAI_API_KEY`、`OPENAI_BASE_URL`、`OPENAI_MODEL`。`OPENAI_BASE_URL` 需包含版本前缀，例如 `https://api.openai.com/v1`。
+2. 环境变量：`OPENAI_API_KEY`、`OPENAI_BASE_URL`、`OPENAI_MODEL`。程序只在地址后面拼接 `/chat/completions`。OpenAI 官方地址本身带 `/v1`。DeepSeek 使用 `https://api.deepseek.com`，不加 `/v1`。
 3. 系统提示放在 `docs/prompts/system.md`。
 4. HTTP 超时和有限次重试只针对网络错误和 5xx。工具业务失败不在 HTTP 层重试。
 5. 有 usage 时写入 Decision，供 Trace 记录。

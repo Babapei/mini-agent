@@ -4,7 +4,7 @@
 
 ## 已决定
 
-1. 实现语言用 Python 3.12。候选人在开始实现前选定。测试材料里的示例代码仍用 TypeScript，那是被 Agent 阅读的 workspace，不是 Agent 本身。
+1. 实现语言用 Python。`pyproject.toml` 要求 3.9 或更高。本机用 3.9.6 跑过测试。测试材料里的示例代码仍用 TypeScript，那是被 Agent 阅读的 workspace，不是 Agent 本身。
 2. Mock 和 OpenAI 兼容模型共用同一个主循环、同一套工具和同一个 `Decision`。两个后端都要有可检查的结果：Mock 要有真实 Trace；真实模型至少要有不访问网络的响应夹具测试。
 3. 没有密钥时不编造真实模型 Trace。文档写明未实跑和原因。
 4. 文件工具限制在 workspace 根目录内。这是基础质量，不是事后再加的可选项。
@@ -15,17 +15,20 @@
 9. 基础阶段结束后做拓展。顺序写在 `docs/EXTENSION_PLAN.md`：权限、计划、计划修订、上下文压缩、流式输出、失败恢复提示、工具检索、子代理。一次只做一个阶段。
 10. 多轮对话仍然不做。拓展不把一句任务变成可以接着追问的会话。
 
-## 基础阶段曾缓做、现已排期
+## 基础阶段曾缓做、拓展阶段已完成
 
-下面这些在基础阶段写过「明确不做」，是为了先收住必做范围。拓展阶段按 EXTENSION_PLAN 实施，不再视为放弃：
+下面这些在基础阶段写过「明确不做」，是为了先收住必做范围。拓展阶段已经按 `docs/EXTENSION_PLAN.md` 做完：
 
-- Sub Agent
-- Streaming
-- 上下文压缩
-- Tool Search
-- 对执行计划动态调整
+- Tool Permission：`--allow`，默认三种权限都允许
+- Plan：第一次工具调用前写入 Trace
+- 对执行计划动态调整：只有 Mock 在工具失败后写 `Plan Update`
+- 上下文压缩：超过 24000 字时压缩更早的工具结果
+- Streaming：命令行默认边跑边打印，`--no-stream` 恢复结束时再打印。真实模型 HTTP 仍是一次返回
+- 失败自动恢复提示：文件不存在时追加 `Recovery Hint`，程序不代替搜索
+- Tool Search：`tool_search`，四个旧工具的 Schema 仍然全部发给模型
+- Sub Agent：`--sub-agent` 才注册 `delegate`，只有一层
 
-Tool Permission、失败自动恢复提示、Plan 也在拓展计划里。Schema、参数校验、Trace、路径沙箱、超时、网络重试和 token 记录已经在基础阶段完成，不重复做。
+Schema、参数校验、Trace、路径沙箱、超时、网络重试和 token 记录已经在基础阶段完成，不重复做。
 
 ## 分类优先级
 

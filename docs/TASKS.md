@@ -5,9 +5,11 @@
 运行前先生成材料：
 
 ```text
-python scripts/generate_workspace.py
-python scripts/run_tasks.py --llm mock
+python3 scripts/generate_workspace.py
+python3 scripts/run_tasks.py --llm mock
 ```
+
+下面的预期调用按 Mock 的固定路径来写。`--llm openai` 不按这些句子判对错。真实模型可能多走几步，例如先读 `sales.txt` 失败，再找到 `data/sales.txt`。
 
 ## 1. 搜索并汇总
 

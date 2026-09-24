@@ -265,6 +265,36 @@ def test_missing_file_hint_is_visible_and_does_not_search(tmp_path: Path) -> Non
     assert "Recovery Hint" in result.trace_markdown
 
 
+def test_recovery_hint_follows_every_tool_result_in_the_same_turn(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "notes.txt").write_text("FIXME: 这里\n", encoding="utf-8")
+    seen: list[list[Message]] = []
+
+    class TwoCalls:
+        def decide(self, messages: list[Message], tools: list[dict]) -> Decision:
+            del tools
+            seen.append(list(messages))
+            if any(message.role == "tool" for message in messages):
+                return Decision(thought="停止", final_answer="下一轮")
+            return Decision(
+                thought="同时读取和搜索",
+                tool_calls=[
+                    ToolCall(name="read_file", arguments={"path": "data/missing.txt"}, id="call-read"),
+                    ToolCall(name="search_text", arguments={"query": "FIXME"}, id="call-search"),
+                ],
+            )
+
+    result = run_agent("同时调用", workspace, TwoCalls())
+    roles = [message.role for message in seen[-1]]
+    assert roles[roles.index("assistant") + 1 : roles.index("assistant") + 3] == ["tool", "tool"]
+    assert seen[-1][-1].role == "user"
+    assert "恢复提示" in seen[-1][-1].content
+    headings = _headings(result.trace_markdown)
+    hint_at = headings.index("Recovery Hint")
+    assert headings[:hint_at].count("Tool Result") == 2
+
+
 def test_path_escape_does_not_add_recovery_hint(tmp_path: Path) -> None:
     workspace = tmp_path / "workspace"
     workspace.mkdir()
