@@ -1,8 +1,12 @@
 # Mini Agent
 
-一个用 Python 实现的命令行 Agent。它接收自然语言任务，自己决定调用 `read_file`、`write_file`、`search_text` 和 `calculator`，再根据工具结果决定下一步。`tool_search` 可以查找这些工具的说明。`delegate` 默认关闭，加上 `--sub-agent` 才能把一句子任务交给下一层。Mock 和 OpenAI 兼容接口共用同一个主循环。
+一个用 Python 标准库实现的命令行 Agent。一次只处理一句任务：把任务和已有结果交给模型，由模型决定调用工具还是给出最终答案；程序执行工具后把结果追加回去，再问下一次。默认最多 12 轮，同一失败连续两次或轮数用尽就停止。这一句结束进程退出，不做多轮对话。每一步写入 Trace。Mock 和 OpenAI 兼容接口走同一个循环。真实模型用过 DeepSeek（`deepseek-flash`），地址不带 `/v1`；线上请求仍是一次返回。
 
-设计在 [docs/DESIGN.md](docs/DESIGN.md)。阶段记录和门禁在 [docs/process/PROJECT_PLAN.md](docs/process/PROJECT_PLAN.md) 和 [docs/process/QUALITY_GATES.md](docs/process/QUALITY_GATES.md)。
+模型可以调用的基础工具是 `read_file`、`write_file`、`search_text` 和 `calculator`。文件限制在 `workspace/` 内。计算器不用 `eval`，合计必须来自它的返回值，不能由模型自己报一个数。
+
+循环上已经加上：调用前可写计划，Mock 在失败后可修订计划；权限不够就拒绝且不执行（`--allow`）；上下文过长时压缩更早的工具结果；文件不存在时给出恢复提示，下一步仍由模型决定；终端默认边跑边打印（`--no-stream` 可关掉）；`tool_search` 按字面量查找工具说明；`--sub-agent` 才允许把一句子任务交给下一层，且不能再委托。
+
+怎么跑、每项看哪份 Trace，写在 [docs/TASKS.md](docs/TASKS.md)。设计在 [docs/DESIGN.md](docs/DESIGN.md)。阶段记录和门禁在 [docs/process/PROJECT_PLAN.md](docs/process/PROJECT_PLAN.md) 和 [docs/process/QUALITY_GATES.md](docs/process/QUALITY_GATES.md)。
 
 ## 项目结构
 
